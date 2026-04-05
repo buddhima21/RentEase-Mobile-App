@@ -8,6 +8,8 @@ import SignupScreen from '../screens/auth/SignupScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import OwnerDashboardScreen from '../screens/owner/OwnerDashboardScreen';
 import ManagePropertyScreen from '../screens/owner/ManagePropertyScreen';
+import AdminLoginScreen from '../screens/admin/AdminLoginScreen';
+import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -21,6 +23,8 @@ export default function AppNavigator() {
       <Stack.Screen name="Signup" component={SignupScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="OwnerDashboard" component={OwnerDashboardScreen} />
       <Stack.Screen name="ManageProperty" component={ManagePropertyScreen} />
+      <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
+      <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
     </Stack.Navigator>
   );
 }

@@ -18,10 +18,25 @@ const TABS_LOGGED_IN = [
   { key: 'inbox', label: 'Inbox', icon: 'mail-outline' },
   { key: 'profile', label: 'Profile', icon: 'person-outline' },
 ];
+const TABS_ADMIN = [
+  { key: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+  { key: 'users', label: 'Users', icon: 'people-outline' },
+  { key: 'approvals', label: 'Approvals', icon: 'pending-actions' },
+];
 
 export default function BottomNav({ activeTab = 'home', onTabPress }) {
   const { user } = useAuth();
-  const tabs = user ? TABS_LOGGED_IN : TABS_LOGGED_OUT;
+  
+  let tabs = TABS_LOGGED_OUT;
+  if (user) {
+    if (user.role === 'admin') {
+      // Switch navbar style depending on whether they are in the admin section or regular app
+      const isAdminTab = TABS_ADMIN.some(tab => tab.key === activeTab);
+      tabs = isAdminTab ? TABS_ADMIN : TABS_LOGGED_IN;
+    } else {
+      tabs = TABS_LOGGED_IN;
+    }
+  }
 
   return (
     <View style={styles.nav}>

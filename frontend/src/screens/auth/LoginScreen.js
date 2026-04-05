@@ -268,6 +268,16 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
+          {/* ── Admin Login (Real-world discreet entry) ── */}
+          <TouchableOpacity 
+            style={styles.adminFooter} 
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('AdminLogin')}
+          >
+            <MaterialIcons name="lock" size={12} color={Colors.outline} />
+            <Text style={styles.adminFooterText}>Admin? Login here</Text>
+          </TouchableOpacity>
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -525,5 +535,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.secondary,
+  },
+
+  // Admin Footer
+  adminFooter: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 24,
+    opacity: 0.7,
+  },
+  adminFooterText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.outline,
+    letterSpacing: 0.3,
   },
 });
