@@ -11,6 +11,11 @@ import ManagePropertyScreen from '../screens/owner/ManagePropertyScreen';
 import AdminLoginScreen from '../screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 
+// ── Rent Payment & Tracking screens ──
+import TenantBillsScreen from '../screens/user/TenantBillsScreen';
+import RentPaymentScreen from '../screens/user/RentPaymentScreen';
+import TenantWalletScreen from '../screens/user/TenantWalletScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -25,6 +30,11 @@ export default function AppNavigator() {
       <Stack.Screen name="ManageProperty" component={ManagePropertyScreen} />
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+
+      {/* ── Rent Payment & Tracking ── */}
+      <Stack.Screen name="TenantBills"   component={TenantBillsScreen} />
+      <Stack.Screen name="RentPayment"   component={RentPaymentScreen} />
+      <Stack.Screen name="TenantWallet"  component={TenantWalletScreen} />
     </Stack.Navigator>
   );
 }
