@@ -323,6 +323,16 @@ export default function HomeScreen({ navigation }) {
                   <Text style={styles.dropdownItemText}>My Properties</Text>
                 </TouchableOpacity>
               )}
+              {(user?.role === 'tenant' || user?.role === 'owner') && (
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  activeOpacity={0.7}
+                  onPress={() => { setShowProfileMenu(false); navigation.navigate('Agreements'); }}
+                >
+                  <MaterialIcons name="description" size={20} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.dropdownItemText}>My Agreements</Text>
+                </TouchableOpacity>
+              )}
               <View style={styles.dropdownDivider} />
               <TouchableOpacity style={styles.dropdownItemLogout} activeOpacity={0.7} onPress={handleLogout}>
                 <MaterialIcons name="logout" size={20} color={Colors.error} />

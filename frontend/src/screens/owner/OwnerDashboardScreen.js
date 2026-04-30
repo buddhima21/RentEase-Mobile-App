@@ -229,6 +229,24 @@ export default function OwnerDashboardScreen({ navigation }) {
         </View>
 
         {/* ── MY LISTINGS SECTION ── */}
+        {/* ── AGREEMENTS QUICK LINK ── */}
+        <TouchableOpacity
+          style={styles.agreementsLink}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('Agreements')}
+        >
+          <View style={styles.agreementsLinkLeft}>
+            <View style={styles.agreementsLinkIcon}>
+              <MaterialIcons name="description" size={22} color={Colors.secondary} />
+            </View>
+            <View>
+              <Text style={styles.agreementsLinkTitle}>My Agreements</Text>
+              <Text style={styles.agreementsLinkSub}>View & manage rental contracts</Text>
+            </View>
+          </View>
+          <MaterialIcons name="chevron-right" size={22} color={Colors.secondary} />
+        </TouchableOpacity>
+
         <View style={styles.listingsSection}>
           <View style={styles.sectionHeader}>
             <View>
@@ -527,6 +545,43 @@ const styles = StyleSheet.create({
   statLabel:   { fontSize: 12, fontWeight: '600', color: Colors.onSurfaceVariant, marginBottom: 10 },
   statBadge:   { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   statBadgeText: { fontSize: 11, fontWeight: '700' },
+
+  // Agreements quick link
+  agreementsLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    shadowColor: '#191C1E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.secondary,
+  },
+  agreementsLinkLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  agreementsLinkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 101, 145, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  agreementsLinkTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.primary,
+    marginBottom: 2,
+  },
+  agreementsLinkSub: {
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+  },
 
   // Listings section
   listingsSection: { marginBottom: 20 },

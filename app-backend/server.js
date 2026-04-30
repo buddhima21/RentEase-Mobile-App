@@ -22,6 +22,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/properties", require("./routes/propertyRoutes"));
+app.use("/api/agreements", require("./routes/agreementRoutes"));
 
 // Test route
 app.get("/", (req, res) => {
