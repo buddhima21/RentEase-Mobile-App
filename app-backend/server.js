@@ -23,6 +23,12 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/properties", require("./routes/propertyRoutes"));
 
+// ── Rent Payment & Tracking routes ──
+app.use("/api/invoices",  require("./routes/invoiceRoutes"));
+app.use("/api/payments",  require("./routes/paymentRoutes"));
+app.use("/api/wallet",    require("./routes/walletRoutes"));
+app.use("/api/cards",     require("./routes/bankCardRoutes"));
+
 // Test route
 app.get("/", (req, res) => {
   res.json({ message: "RentEase API is running 🚀" });
