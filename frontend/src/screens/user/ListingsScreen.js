@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  View,
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View,
   Text,
   TextInput,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  
   Platform,
   ActivityIndicator,
   RefreshControl,
   Animated,
   Dimensions,
   Modal,
-  Pressable,
-} from 'react-native';
+  Pressable } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '../../constants/Colors';
