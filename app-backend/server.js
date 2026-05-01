@@ -22,12 +22,9 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/properties", require("./routes/propertyRoutes"));
-
-// ── Rent Payment & Tracking routes ──
-app.use("/api/invoices",  require("./routes/invoiceRoutes"));
-app.use("/api/payments",  require("./routes/paymentRoutes"));
-app.use("/api/wallet",    require("./routes/walletRoutes"));
-app.use("/api/cards",     require("./routes/bankCardRoutes"));
+app.use("/api/reviews", require("./routes/reviewRoutes"));
+app.use("/api/analytics", require("./routes/analyticsRoutes"));
+app.use("/api/agreements", require("./routes/agreementRoutes"));
 
 // ── Tenant Booking & Allocation routes ──
 app.use("/api/bookings",  require("./routes/bookingRoutes"));

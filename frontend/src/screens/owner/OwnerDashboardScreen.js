@@ -44,7 +44,6 @@ const getAvatarColor = (name) => {
   return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 };
 
-/** Returns status badge styles { bg, text, label } */
 const getStatusStyle = (status) => {
   switch (status) {
     case 'approved':
@@ -58,22 +57,16 @@ const getStatusStyle = (status) => {
   }
 };
 
-/** Placeholder image when property has no image */
 const FALLBACK_IMAGE = 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?w=600';
-
-// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function OwnerDashboardScreen({ navigation }) {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('profile');
-
-  // Data state
   const [properties, setProperties] = useState([]);
   const [isLoading, setIsLoading]   = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [fetchError, setFetchError] = useState(null);
 
-  // ── Load Properties (refetch every time screen is focused) ──
   const loadProperties = useCallback(async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     else setIsLoading(true);
@@ -84,9 +77,7 @@ export default function OwnerDashboardScreen({ navigation }) {
       setProperties(data);
     } catch (error) {
       console.error('Failed to load properties:', error);
-      const message =
-        error.response?.data?.message ||
-        'Could not load your properties. Please check your connection.';
+      const message = error.response?.data?.message || 'Could not load your properties.';
       setFetchError(message);
     } finally {
       setIsLoading(false);
@@ -94,58 +85,33 @@ export default function OwnerDashboardScreen({ navigation }) {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadProperties();
-    }, [loadProperties]),
-  );
+  useFocusEffect(useCallback(() => { loadProperties(); }, [loadProperties]));
 
-  // ── Delete Handler ──
   const handleDelete = (property) => {
-    Alert.alert(
-      'Delete Listing',
-      `Are you sure you want to permanently delete "${property.title}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteProperty(property._id);
-              setProperties((prev) => prev.filter((p) => p._id !== property._id));
-              Alert.alert('Deleted', 'Your listing has been removed.');
-            } catch (error) {
-              console.error('Delete failed:', error);
-              Alert.alert(
-                'Delete Failed',
-                error.response?.data?.message || 'Could not delete the listing. Please try again.',
-              );
-            }
-          },
-        },
-      ],
-    );
+    Alert.alert('Delete Listing', `Are you sure?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+        try {
+          await deleteProperty(property._id);
+          setProperties((prev) => prev.filter((p) => p._id !== property._id));
+        } catch (error) { Alert.alert('Error', 'Could not delete.'); }
+      }},
+    ]);
   };
 
-  // ── Tab Navigation ──
   const handleTabPress = (tabKey) => {
     setActiveTab(tabKey);
     if (tabKey === 'home') navigation.navigate('Home');
     if (tabKey === 'listings') navigation.navigate('Listings');
   };
 
-  // ── Computed Stats ──
   const totalListings  = properties.length;
   const approvedCount  = properties.filter((p) => p.status === 'approved').length;
   const pendingCount   = properties.filter((p) => p.status === 'pending').length;
   const rejectedCount  = properties.filter((p) => p.status === 'rejected').length;
 
-  // ─── Render ───────────────────────────────────────────────────────────────────
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* ── HEADER ── */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 8 }}>
@@ -168,63 +134,43 @@ export default function OwnerDashboardScreen({ navigation }) {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={() => loadProperties(true)}
-            colors={[Colors.secondary]}
-            tintColor={Colors.secondary}
-          />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => loadProperties(true)} />}
       >
-        {/* ── HERO ── */}
         <View style={styles.hero}>
           <Text style={styles.heroHeading}>Owner Dashboard</Text>
-          <Text style={styles.heroSubtitle}>
-            Welcome back, {getFirstName(user?.name) || 'Owner'}. Here's your property portfolio.
-          </Text>
+          <Text style={styles.heroSubtitle}>Welcome back, {getFirstName(user?.name) || 'Owner'}.</Text>
+          
+          {/* TWO SEPARATE BUTTONS - PROMINENT AT TOP */}
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Analytics', { view: 'stats' })} 
+              style={styles.quickActionBtn}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={['#006591', '#00486b']} style={styles.quickActionGradient}>
+                <MaterialIcons name="insights" size={18} color="#fff" />
+                <Text style={styles.quickActionText}>System Analytics</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Analytics', { view: 'reviews' })} 
+              style={styles.quickActionBtn}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={['#f59e0b', '#d97706']} style={styles.quickActionGradient}>
+                <MaterialIcons name="rate-review" size={18} color="#fff" />
+                <Text style={styles.quickActionText}>Manage Reviews</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* ── STATS GRID ── */}
         <View style={styles.statsGrid}>
-          <StatCard
-            label="Total Listings"
-            value={isLoading ? '–' : totalListings}
-            icon="home-work"
-            iconColor={Colors.secondary}
-            badge={`${approvedCount} live`}
-            badgeColor="rgba(0, 101, 145, 0.1)"
-            badgeTextColor={Colors.secondary}
-          />
-          <StatCard
-            label="Pending Review"
-            value={isLoading ? '–' : pendingCount}
-            icon="hourglass-top"
-            iconColor="#f59e0b"
-            badge="Awaiting admin"
-            badgeColor="rgba(245, 158, 11, 0.1)"
-            badgeTextColor="#92400e"
-          />
-          <StatCard
-            label="Approved"
-            value={isLoading ? '–' : approvedCount}
-            icon="verified"
-            iconColor="#10b981"
-            badge="Live now"
-            badgeColor="rgba(16, 185, 129, 0.1)"
-            badgeTextColor="#065f46"
-          />
-          {rejectedCount > 0 && (
-            <StatCard
-              label="Rejected"
-              value={rejectedCount}
-              icon="cancel"
-              iconColor={Colors.error}
-              badge="Needs attention"
-              badgeColor="rgba(186, 26, 26, 0.08)"
-              badgeTextColor={Colors.error}
-            />
-          )}
+          <StatCard label="Total Listings" value={isLoading ? '–' : totalListings} icon="home-work" iconColor={Colors.secondary} badge={`${approvedCount} live`} badgeColor="rgba(0,101,145,0.1)" badgeTextColor={Colors.secondary} />
+          <StatCard label="Pending Review" value={isLoading ? '–' : pendingCount} icon="hourglass-top" iconColor="#f59e0b" badge="Awaiting admin" badgeColor="rgba(245,158,11,0.1)" badgeTextColor="#92400e" />
+          <StatCard label="Approved" value={isLoading ? '–' : approvedCount} icon="verified" iconColor="#10b981" badge="Live now" badgeColor="rgba(16,185,129,0.1)" badgeTextColor="#065f46" />
+          {rejectedCount > 0 && <StatCard label="Rejected" value={rejectedCount} icon="cancel" iconColor={Colors.error} badge="Needs attention" badgeColor="rgba(186,26,26,0.08)" badgeTextColor={Colors.error} />}
         </View>
 
         {/* ── BOOKING MANAGEMENT ── */}
@@ -261,110 +207,55 @@ export default function OwnerDashboardScreen({ navigation }) {
         </View>
 
         {/* ── MY LISTINGS SECTION ── */}
+        {/* ── AGREEMENTS QUICK LINK ── */}
+        <TouchableOpacity
+          style={styles.agreementsLink}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('Agreements')}
+        >
+          <View style={styles.agreementsLinkLeft}>
+            <View style={styles.agreementsLinkIcon}>
+              <MaterialIcons name="description" size={22} color={Colors.secondary} />
+            </View>
+            <View>
+              <Text style={styles.agreementsLinkTitle}>My Agreements</Text>
+              <Text style={styles.agreementsLinkSub}>View & manage rental contracts</Text>
+            </View>
+          </View>
+          <MaterialIcons name="chevron-right" size={22} color={Colors.secondary} />
+        </TouchableOpacity>
+
         <View style={styles.listingsSection}>
           <View style={styles.sectionHeader}>
             <View>
               <Text style={styles.sectionTitle}>My Listings</Text>
               <Text style={styles.sectionSubtitle}>Manage and track your active properties</Text>
             </View>
-            {Platform.OS === 'web' && (
-              <TouchableOpacity
-                style={styles.addBtnDesktop}
-                activeOpacity={0.85}
-                onPress={() => navigation.navigate('ManageProperty')}
-              >
-                <LinearGradient
-                  colors={[Colors.secondary, Colors.primary]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.addBtnGradient}
-                >
-                  <MaterialIcons name="add" size={18} color="#fff" />
-                  <Text style={styles.addBtnText}>Add Property</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            )}
           </View>
 
-          {/* ── LOADING STATE ── */}
-          {isLoading && (
-            <View style={styles.centeredBox}>
-              <ActivityIndicator size="large" color={Colors.secondary} />
-              <Text style={styles.loadingText}>Loading your properties...</Text>
-            </View>
-          )}
-
-          {/* ── ERROR STATE ── */}
-          {!isLoading && fetchError && (
-            <View style={styles.errorBox}>
-              <MaterialIcons name="cloud-off" size={40} color={Colors.error} />
-              <Text style={styles.errorBoxTitle}>Failed to Load</Text>
-              <Text style={styles.errorBoxText}>{fetchError}</Text>
-              <TouchableOpacity
-                style={styles.retryBtn}
-                onPress={() => loadProperties()}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.retryBtnText}>Try Again</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* ── EMPTY STATE ── */}
-          {!isLoading && !fetchError && properties.length === 0 && (
+          {isLoading && <ActivityIndicator size="large" color={Colors.secondary} style={{ marginTop: 20 }} />}
+          {!isLoading && properties.length === 0 && (
             <View style={styles.emptyBox}>
               <MaterialIcons name="home-work" size={56} color={Colors.outlineVariant} />
               <Text style={styles.emptyTitle}>No Listings Yet</Text>
-              <Text style={styles.emptySubtext}>
-                Tap the + button below to add your first property and start renting it out.
-              </Text>
-              <TouchableOpacity
-                style={styles.emptyAddBtn}
-                onPress={() => navigation.navigate('ManageProperty')}
-                activeOpacity={0.85}
-              >
-                <LinearGradient
-                  colors={[Colors.secondary, Colors.primary]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.emptyAddBtnGradient}
-                >
-                  <MaterialIcons name="add" size={20} color="#fff" />
+              <TouchableOpacity style={styles.emptyAddBtn} onPress={() => navigation.navigate('ManageProperty')}>
+                <LinearGradient colors={[Colors.secondary, Colors.primary]} style={styles.emptyAddBtnGradient}>
                   <Text style={styles.emptyAddBtnText}>Add First Property</Text>
                 </LinearGradient>
               </TouchableOpacity>
             </View>
           )}
 
-          {/* ── PROPERTY CARDS ── */}
-          {!isLoading && !fetchError && (
-            <View style={styles.listContainer}>
-              {properties.map((property) => (
-                <PropertyCard
-                  key={property._id}
-                  property={property}
-                  onEdit={() => navigation.navigate('ManageProperty', { property })}
-                  onDelete={() => handleDelete(property)}
-                  onPress={() => navigation.navigate('PropertyDetails', { property })}
-                />
-              ))}
-            </View>
-          )}
+          <View style={styles.listContainer}>
+            {properties.map((property) => (
+              <PropertyCard key={property._id} property={property} onEdit={() => navigation.navigate('ManageProperty', { property })} onDelete={() => handleDelete(property)} onPress={() => navigation.navigate('PropertyDetails', { property })} />
+            ))}
+          </View>
         </View>
       </ScrollView>
 
-      {/* ── FAB ── */}
-      <TouchableOpacity
-        style={styles.fab}
-        activeOpacity={0.85}
-        onPress={() => navigation.navigate('ManageProperty')}
-      >
-        <LinearGradient
-          colors={[Colors.secondary, Colors.primary]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.fabGradient}
-        >
+      <TouchableOpacity style={styles.fab} activeOpacity={0.85} onPress={() => navigation.navigate('ManageProperty')}>
+        <LinearGradient colors={[Colors.secondary, Colors.primary]} style={styles.fabGradient}>
           <MaterialIcons name="add" size={28} color="#fff" />
         </LinearGradient>
       </TouchableOpacity>
@@ -374,21 +265,15 @@ export default function OwnerDashboardScreen({ navigation }) {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
 function StatCard({ label, value, icon, iconColor, badge, badgeColor, badgeTextColor }) {
   return (
     <View style={styles.statCard}>
       <View style={styles.statCardTop}>
-        <View style={[styles.statIconBox, { backgroundColor: badgeColor }]}>
-          <MaterialIcons name={icon} size={22} color={iconColor} />
-        </View>
+        <View style={[styles.statIconBox, { backgroundColor: badgeColor }]}><MaterialIcons name={icon} size={22} color={iconColor} /></View>
         <Text style={styles.statValue}>{value}</Text>
       </View>
       <Text style={styles.statLabel}>{label}</Text>
-      <View style={[styles.statBadge, { backgroundColor: badgeColor }]}>
-        <Text style={[styles.statBadgeText, { color: badgeTextColor }]}>{badge}</Text>
-      </View>
+      <View style={[styles.statBadge, { backgroundColor: badgeColor }]}><Text style={[styles.statBadgeText, { color: badgeTextColor }]}>{badge}</Text></View>
     </View>
   );
 }
@@ -396,288 +281,102 @@ function StatCard({ label, value, icon, iconColor, badge, badgeColor, badgeTextC
 function PropertyCard({ property, onEdit, onDelete, onPress }) {
   const statusStyle = getStatusStyle(property.status);
   const coverImage  = property.images?.[0] || FALLBACK_IMAGE;
-
   return (
     <TouchableOpacity style={styles.listingCard} activeOpacity={0.9} onPress={onPress}>
-      {/* Image */}
-      <View style={[
-        styles.listingImageWrapper,
-        property.status === 'rejected' && { opacity: 0.6 },
-      ]}>
-        <Image source={{ uri: coverImage }} style={styles.listingImage} />
-      </View>
-
-      {/* Content */}
+      <Image source={{ uri: coverImage }} style={styles.listingImage} />
       <View style={styles.listingContent}>
-        <View style={styles.rowBetween}>
-          <View style={{ flex: 1 }}>
-            {/* Status pill */}
-            <View style={[styles.statusPill, { backgroundColor: statusStyle.bg }]}>
-              <Text style={[styles.statusText, { color: statusStyle.text }]}>
-                {statusStyle.label}
-              </Text>
-            </View>
-
-            <Text style={styles.listingTitle} numberOfLines={1}>{property.title}</Text>
-
-            <View style={styles.locationRow}>
-              <MaterialIcons name="location-on" size={13} color={Colors.onSurfaceVariant} />
-              <Text style={styles.locationText} numberOfLines={1}>{property.location}</Text>
-            </View>
-          </View>
-
-          {/* Action buttons */}
-          <View style={styles.actionBtns}>
-            <TouchableOpacity style={styles.iconAction} onPress={onEdit} activeOpacity={0.7}>
-              <MaterialIcons name="edit" size={17} color={Colors.onSurfaceVariant} />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.iconAction, { backgroundColor: 'rgba(186, 26, 26, 0.08)' }]}
-              onPress={onDelete}
-              activeOpacity={0.7}
-            >
-              <MaterialIcons name="delete" size={17} color={Colors.error} />
-            </TouchableOpacity>
-          </View>
+        <View style={[styles.statusPill, { backgroundColor: statusStyle.bg }]}><Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text></View>
+        <Text style={styles.listingTitle}>{property.title}</Text>
+        <View style={styles.locationRow}><MaterialIcons name="location-on" size={13} color={Colors.onSurfaceVariant} /><Text style={styles.locationText}>{property.location}</Text></View>
+        <View style={styles.actionBtns}>
+          <TouchableOpacity onPress={onEdit}><MaterialIcons name="edit" size={20} color={Colors.primary} /></TouchableOpacity>
+          <TouchableOpacity onPress={onDelete}><MaterialIcons name="delete" size={20} color={Colors.error} /></TouchableOpacity>
         </View>
-
-        {/* Details row */}
-        <View style={styles.detailsRow}>
-          {property.bedrooms != null && (
-            <View style={styles.detailChip}>
-              <MaterialIcons name="hotel" size={12} color={Colors.onSurfaceVariant} />
-              <Text style={styles.detailText}>{property.bedrooms} Bed{property.bedrooms !== 1 ? 's' : ''}</Text>
-            </View>
-          )}
-          {property.bathrooms != null && (
-            <View style={styles.detailChip}>
-              <MaterialIcons name="bathtub" size={12} color={Colors.onSurfaceVariant} />
-              <Text style={styles.detailText}>{property.bathrooms} Bath{property.bathrooms !== 1 ? 's' : ''}</Text>
-            </View>
-          )}
-          <View style={styles.detailChip}>
-            <MaterialIcons name="attach-money" size={12} color={Colors.secondary} />
-            <Text style={[styles.detailText, { color: Colors.secondary, fontWeight: '700' }]}>
-              {Number(property.price).toLocaleString()}/mo
-            </Text>
-          </View>
-          {property.propertyType && (
-            <View style={styles.detailChip}>
-              <MaterialIcons name="category" size={12} color={Colors.onSurfaceVariant} />
-              <Text style={styles.detailText}>{property.propertyType}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Rejection reason */}
-        {property.status === 'rejected' && property.rejectionReason && (
-          <View style={styles.rejectedNote}>
-            <MaterialIcons name="error" size={13} color={Colors.error} style={{ marginRight: 4 }} />
-            <Text style={styles.rejectedText} numberOfLines={2}>
-              {property.rejectionReason}
-            </Text>
-          </View>
-        )}
-
-        {/* Pending note */}
-        {property.status === 'pending' && (
-          <View style={styles.pendingNote}>
-            <MaterialIcons name="hourglass-top" size={13} color="#92400e" style={{ marginRight: 4 }} />
-            <Text style={styles.pendingText}>Under admin review — usually 24–48 hrs.</Text>
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
 }
 
-// ─── Styles ───────────────────────────────────────────────────────────────────
-
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: Colors.background },
-
-  // Header
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(197,198,205,0.2)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  headerLeft:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brand: { fontSize: 18, fontWeight: '800', color: Colors.primary, letterSpacing: -0.3 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 14, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  brand: { fontSize: 18, fontWeight: '800', color: Colors.primary },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  iconBtn: {
-    padding: 6,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceContainerLow,
-  },
-  avatarCircle: {
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: 'center', justifyContent: 'center',
-  },
+  iconBtn: { padding: 6, borderRadius: 20, backgroundColor: '#f0f2f5' },
+  avatarCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   avatarInitials: { color: '#fff', fontSize: 14, fontWeight: '800' },
-
-  scroll:        { flex: 1 },
+  scroll: { flex: 1 },
   scrollContent: { paddingBottom: 120, paddingHorizontal: 20 },
+  hero: { marginTop: 24, marginBottom: 20 },
+  heroHeading: { fontSize: 26, fontWeight: '800', color: Colors.primary },
+  heroSubtitle: { fontSize: 14, color: Colors.onSurfaceVariant, marginBottom: 16 },
+  quickActionsRow: { flexDirection: 'row', gap: 12 },
+  quickActionBtn: { flex: 1, borderRadius: 16, overflow: 'hidden', elevation: 4 },
+  quickActionGradient: { paddingVertical: 14, alignItems: 'center', justifyContent: 'center', gap: 6, flexDirection: 'row' },
+  quickActionText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
+  statCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, flex: 1, minWidth: '45%', elevation: 2 },
+  statCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  statIconBox: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  statValue: { fontSize: 28, fontWeight: '800', color: Colors.primary },
+  statLabel: { fontSize: 12, fontWeight: '600', color: Colors.onSurfaceVariant, marginBottom: 8 },
+  statBadge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
+  statBadgeText: { fontSize: 11, fontWeight: '700' },
 
-  // Hero
-  hero:         { marginTop: 24, marginBottom: 24 },
-  heroHeading:  { fontSize: 26, fontWeight: '800', color: Colors.primary, letterSpacing: -0.5 },
-  heroSubtitle: { fontSize: 14, color: Colors.onSurfaceVariant, lineHeight: 20, marginTop: 4 },
-
-  // Stats grid
-  statsGrid: {
+  // Agreements quick link
+  agreementsLink: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 36,
-  },
-  statCard: {
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 16,
-    flex: 1,
-    minWidth: '45%',
+    marginBottom: 20,
     shadowColor: '#191C1E',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 10,
     elevation: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.secondary,
   },
-  statCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  statIconBox: { width: 38, height: 38, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  statValue:   { fontSize: 28, fontWeight: '800', color: Colors.primary },
-  statLabel:   { fontSize: 12, fontWeight: '600', color: Colors.onSurfaceVariant, marginBottom: 10 },
-  statBadge:   { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
-  statBadgeText: { fontSize: 11, fontWeight: '700' },
+  agreementsLinkLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  agreementsLinkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 101, 145, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  agreementsLinkTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.primary,
+    marginBottom: 2,
+  },
+  agreementsLinkSub: {
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+  },
 
   // Listings section
   listingsSection: { marginBottom: 20 },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 16,
-  },
-  sectionTitle:    { fontSize: 20, fontWeight: '800', color: Colors.primary, letterSpacing: -0.3 },
-  sectionSubtitle: { fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 3 },
-  addBtnDesktop:   { borderRadius: 10, overflow: 'hidden' },
-  addBtnGradient:  { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10 },
-  addBtnText:      { color: '#fff', fontWeight: '700', fontSize: 13 },
-
-  // States
-  centeredBox: { alignItems: 'center', paddingVertical: 48, gap: 12 },
-  loadingText: { fontSize: 14, color: Colors.onSurfaceVariant, fontWeight: '500' },
-  errorBox: {
-    alignItems: 'center',
-    paddingVertical: 40,
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 24,
-    gap: 8,
-  },
-  errorBoxTitle: { fontSize: 16, fontWeight: '800', color: Colors.primary, marginTop: 8 },
-  errorBoxText:  { fontSize: 13, color: Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 18 },
-  retryBtn: {
-    marginTop: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: Colors.surfaceContainerHigh,
-    borderRadius: 10,
-  },
-  retryBtnText: { fontSize: 14, fontWeight: '700', color: Colors.primary },
-
-  emptyBox: { alignItems: 'center', paddingVertical: 40, paddingHorizontal: 20, gap: 8 },
-  emptyTitle:   { fontSize: 18, fontWeight: '800', color: Colors.primary, marginTop: 12 },
-  emptySubtext: { fontSize: 13, color: Colors.onSurfaceVariant, textAlign: 'center', lineHeight: 20 },
-  emptyAddBtn: { marginTop: 16, borderRadius: 14, overflow: 'hidden', width: '100%' },
-  emptyAddBtnGradient: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 14,
-  },
-  emptyAddBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
-
-  // Property cards
+  sectionHeader: { marginBottom: 16 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: Colors.primary },
+  sectionSubtitle: { fontSize: 12, color: Colors.onSurfaceVariant },
   listContainer: { gap: 16 },
-  listingCard: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    overflow: 'hidden',
-    shadowColor: '#191C1E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  listingImageWrapper: {
-    width: '100%',
-    height: 180,
-  },
-  listingImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  listingCard: { backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden', elevation: 3 },
+  listingImage: { width: '100%', height: 160 },
   listingContent: { padding: 16 },
-  rowBetween: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  statusPill: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    marginBottom: 6,
-  },
-  statusText:   { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  statusPill: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, marginBottom: 8 },
+  statusText: { fontSize: 10, fontWeight: '800' },
   listingTitle: { fontSize: 16, fontWeight: '800', color: Colors.primary, marginBottom: 4 },
-  locationRow:  { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  locationText: { fontSize: 12, color: Colors.onSurfaceVariant, flex: 1 },
-  actionBtns:   { flexDirection: 'row', gap: 8 },
-  iconAction: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: Colors.surfaceContainerLow,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  detailsRow: { flexDirection: 'row', gap: 8, marginTop: 12, flexWrap: 'wrap' },
-  detailChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.surfaceContainerLow,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  detailText: { fontSize: 12, fontWeight: '600', color: Colors.onSurfaceVariant },
-
-  rejectedNote: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 10, backgroundColor: '#fee2e2', borderRadius: 8, padding: 8 },
-  rejectedText: { fontSize: 12, fontStyle: 'italic', fontWeight: '500', color: '#991b1b', flex: 1, lineHeight: 17 },
-  pendingNote:  { flexDirection: 'row', alignItems: 'center', marginTop: 10, backgroundColor: '#fef3c7', borderRadius: 8, padding: 8 },
-  pendingText:  { fontSize: 12, fontWeight: '500', color: '#92400e', flex: 1 },
-
-  // FAB
-  fab: {
-    position: 'absolute',
-    bottom: Platform.OS === 'ios' ? 100 : 80,
-    right: 20,
-    width: 56, height: 56,
-    borderRadius: 28,
-    shadowColor: Colors.secondary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 10,
-    overflow: 'hidden',
-  },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 12 },
+  locationText: { fontSize: 12, color: Colors.onSurfaceVariant },
+  actionBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
+  fab: { position: 'absolute', bottom: 80, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
   fabGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   // Booking Management
