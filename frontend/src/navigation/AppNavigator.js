@@ -16,6 +16,11 @@ import TenantBillsScreen from '../screens/user/TenantBillsScreen';
 import RentPaymentScreen from '../screens/user/RentPaymentScreen';
 import TenantWalletScreen from '../screens/user/TenantWalletScreen';
 
+// ── Tenant Booking & Allocation screens ──
+import TenantBookingDashboard from '../screens/user/TenantBookingDashboard';
+import OwnerBookingRequestsScreen from '../screens/owner/OwnerBookingRequestsScreen';
+import OwnerAllocationHistoryScreen from '../screens/owner/OwnerAllocationHistoryScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -35,6 +40,11 @@ export default function AppNavigator() {
       <Stack.Screen name="TenantBills"   component={TenantBillsScreen} />
       <Stack.Screen name="RentPayment"   component={RentPaymentScreen} />
       <Stack.Screen name="TenantWallet"  component={TenantWalletScreen} />
+
+      {/* ── Tenant Booking & Allocation ── */}
+      <Stack.Screen name="TenantBookingDashboard" component={TenantBookingDashboard} />
+      <Stack.Screen name="OwnerBookingRequests" component={OwnerBookingRequestsScreen} />
+      <Stack.Screen name="OwnerAllocationHistory" component={OwnerAllocationHistoryScreen} />
     </Stack.Navigator>
   );
 }

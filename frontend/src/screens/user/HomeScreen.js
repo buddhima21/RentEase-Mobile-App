@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  View,
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  
   Platform,
   Animated,
   Modal,
   Pressable,
   ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+  RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import CategoryChip from '../../components/ui/CategoryChip';
 import FeaturedCard from '../../components/cards/FeaturedCard';
@@ -321,6 +320,14 @@ export default function HomeScreen({ navigation }) {
                   onPress={() => { setShowProfileMenu(false); navigation.navigate('OwnerDashboard'); }}>
                   <MaterialIcons name="business" size={20} color={Colors.onSurfaceVariant} />
                   <Text style={styles.dropdownItemText}>My Properties</Text>
+                </TouchableOpacity>
+              )}
+              {/* ── Tenant: Booking Dashboard ── */}
+              {(user?.role === 'tenant' || user?.role === 'user') && (
+                <TouchableOpacity style={styles.dropdownItem} activeOpacity={0.7}
+                  onPress={() => { setShowProfileMenu(false); navigation.navigate('TenantBookingDashboard'); }}>
+                  <MaterialIcons name="book-online" size={20} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.dropdownItemText}>My Bookings</Text>
                 </TouchableOpacity>
               )}
               {/* ── Tenant: Rent Payment & Tracking ── */}

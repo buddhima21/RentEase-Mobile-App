@@ -29,6 +29,9 @@ app.use("/api/payments",  require("./routes/paymentRoutes"));
 app.use("/api/wallet",    require("./routes/walletRoutes"));
 app.use("/api/cards",     require("./routes/bankCardRoutes"));
 
+// ── Tenant Booking & Allocation routes ──
+app.use("/api/bookings",  require("./routes/bookingRoutes"));
+
 // Test route
 app.get("/", (req, res) => {
   res.json({ message: "RentEase API is running 🚀" });

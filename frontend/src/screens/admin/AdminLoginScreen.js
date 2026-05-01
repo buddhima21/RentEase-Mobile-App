@@ -1,17 +1,16 @@
 import React, { useState } from 'react';
-import {
-  View,
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View,
   Text,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
+  
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
   ImageBackground,
   ActivityIndicator,
-  ScrollView,
-} from 'react-native';
+  ScrollView } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import Colors from '../../constants/Colors';
