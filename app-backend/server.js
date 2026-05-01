@@ -35,6 +35,7 @@ app.use("/api/wallet",         require("./routes/walletRoutes"));
 app.use("/api/bank-cards",     require("./routes/bankCardRoutes"));
 app.use("/api/payments",       require("./routes/paymentRoutes"));
 app.use("/api/notifications",  require("./routes/notificationRoutes"));
+app.use("/api/maintenance",    require("./routes/maintenanceRoutes"));
 
 // Test route
 app.get("/", (req, res) => {
