@@ -12,6 +12,7 @@ import AdminLoginScreen from '../screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import ReviewScreen from '../screens/user/ReviewScreen';
 import AnalyticsScreen from '../screens/shared/AnalyticsScreen';
+import InboxScreen from '../screens/user/InboxScreen';
 // ── Agreement screens (new) ──────────────────────────────────────────────────
 import AgreementsScreen from '../screens/agreements/AgreementsScreen';
 import AgreementDetailsScreen from '../screens/agreements/AgreementDetailsScreen';
@@ -53,6 +54,7 @@ export default function AppNavigator() {
 
       <Stack.Screen name="Reviews" component={ReviewScreen} />
       <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+      <Stack.Screen name="Inbox" component={InboxScreen} />
       
       {/* Agreement & Contract Management */}
       <Stack.Screen name="Agreements" component={AgreementsScreen} />

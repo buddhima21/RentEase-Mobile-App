@@ -55,6 +55,7 @@ export default function TenantBookingDashboard({ navigation }) {
     setActiveTab(k);
     if (k === 'home') navigation.navigate('Home');
     if (k === 'listings') navigation.navigate('Listings');
+    if (k === 'inbox') navigation.navigate('Inbox');
   };
 
   const validateDate = (dateStr) => {

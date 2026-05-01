@@ -25,6 +25,7 @@ import DetailHeader from '../../components/navigation/DetailHeader';
 import AmenityItem from '../../components/ui/AmenityItem';
 import { useAuth } from '../../context/AuthContext';
 import { createBooking, getPropertyAvailability } from '../../services/bookingService';
+import { getPropertyById } from '../../services/propertyService';
 import API from '../../services/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -184,10 +185,13 @@ export default function PropertyDetailsScreen({ navigation, route }) {
   const [availability, setAvailability] = useState(null);
   const [availLoading, setAvailLoading] = useState(false);
 
+  // ── Full property fetch state ──
+  const [fullProperty, setFullProperty] = useState(null);
+
   // ── Consume real property from route params ──
   const raw = route?.params?.property || {};
 
-  const property = {
+  const baseProperty = {
     id:              raw.id   || raw._id,
     title:           raw.title           || 'Property Listing',
     location:        raw.location        || 'Location not specified',
@@ -206,23 +210,49 @@ export default function PropertyDetailsScreen({ navigation, route }) {
     status:          raw.status,
   };
 
+  // Override with full details if fetched
+  const property = fullProperty || baseProperty;
+
   const typeColor = getTypeColor(property.propertyType);
 
   // ── Fetch property availability ──
   const fetchAvailability = useCallback(async () => {
-    if (!property.id) return;
+    if (!baseProperty.id) return;
     try {
       setAvailLoading(true);
-      const data = await getPropertyAvailability(property.id);
+      const data = await getPropertyAvailability(baseProperty.id);
       setAvailability(data);
     } catch (err) {
       console.error('Availability fetch error:', err);
     } finally {
       setAvailLoading(false);
     }
-  }, [property.id]);
+  }, [baseProperty.id]);
 
-  useEffect(() => { fetchAvailability(); }, [fetchAvailability]);
+  const fetchFullProperty = useCallback(async () => {
+    if (!baseProperty.id) return;
+    try {
+      const data = await getPropertyById(baseProperty.id);
+      // Ensure amenities and images are arrays
+      setFullProperty({
+        ...data,
+        id: data._id,
+        beds: data.bedrooms,
+        baths: data.bathrooms,
+        priceRaw: data.price,
+        price: `LKR ${Number(data.price).toLocaleString()}`,
+        amenities: Array.isArray(data.amenities) ? data.amenities : [],
+        images: Array.isArray(data.images) && data.images.length > 0 ? data.images : baseProperty.images,
+      });
+    } catch (err) {
+      console.log('Error fetching full property details', err);
+    }
+  }, [baseProperty.id]);
+
+  useEffect(() => { 
+    fetchAvailability(); 
+    fetchFullProperty();
+  }, [fetchAvailability, fetchFullProperty]);
 
   // ── Review State ──
   const [reviews, setReviews] = useState([]);

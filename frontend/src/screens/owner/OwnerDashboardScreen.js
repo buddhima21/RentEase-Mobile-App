@@ -103,6 +103,7 @@ export default function OwnerDashboardScreen({ navigation }) {
     setActiveTab(tabKey);
     if (tabKey === 'home') navigation.navigate('Home');
     if (tabKey === 'listings') navigation.navigate('Listings');
+    if (tabKey === 'inbox') navigation.navigate('Inbox');
   };
 
   const totalListings  = properties.length;
@@ -285,9 +286,21 @@ function PropertyCard({ property, onEdit, onDelete, onPress }) {
     <TouchableOpacity style={styles.listingCard} activeOpacity={0.9} onPress={onPress}>
       <Image source={{ uri: coverImage }} style={styles.listingImage} />
       <View style={styles.listingContent}>
-        <View style={[styles.statusPill, { backgroundColor: statusStyle.bg }]}><Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text></View>
+        <View style={[styles.statusPill, { backgroundColor: statusStyle.bg }]}>
+          <Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text>
+        </View>
         <Text style={styles.listingTitle}>{property.title}</Text>
-        <View style={styles.locationRow}><MaterialIcons name="location-on" size={13} color={Colors.onSurfaceVariant} /><Text style={styles.locationText}>{property.location}</Text></View>
+        <View style={styles.locationRow}>
+          <MaterialIcons name="location-on" size={13} color={Colors.onSurfaceVariant} />
+          <Text style={styles.locationText}>{property.location}</Text>
+        </View>
+        {/* Rejection Reason — visible only to owner */}
+        {property.status === 'rejected' && !!property.rejectionReason ? (
+          <View style={styles.rejectionBanner}>
+            <MaterialIcons name="info-outline" size={14} color="#991b1b" />
+            <Text style={styles.rejectionReasonText}>{property.rejectionReason}</Text>
+          </View>
+        ) : null}
         <View style={styles.actionBtns}>
           <TouchableOpacity onPress={onEdit}><MaterialIcons name="edit" size={20} color={Colors.primary} /></TouchableOpacity>
           <TouchableOpacity onPress={onDelete}><MaterialIcons name="delete" size={20} color={Colors.error} /></TouchableOpacity>
@@ -378,6 +391,27 @@ const styles = StyleSheet.create({
   actionBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
   fab: { position: 'absolute', bottom: 80, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
   fabGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  // Rejection reason banner (shown on owner's rejected properties)
+  rejectionBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: 'rgba(153,27,27,0.08)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#991b1b',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  rejectionReasonText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#991b1b',
+    fontWeight: '600',
+    lineHeight: 17,
+  },
 
   // Booking Management
   bookingMgmtSection: { marginBottom: 28, gap: 10 },

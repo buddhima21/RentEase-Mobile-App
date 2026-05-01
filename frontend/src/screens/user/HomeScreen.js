@@ -121,6 +121,7 @@ export default function HomeScreen({ navigation }) {
     if (tabKey === 'listings') navigation.navigate('Listings');
     else if (tabKey === 'login') navigation.navigate('Login');
     else if (tabKey === 'profile') setShowProfileMenu(true);
+    else if (tabKey === 'inbox') navigation.navigate('Inbox');
   };
 
   const handleLogout = async () => {
@@ -344,6 +345,8 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.dropdownItemText}>My Wallet</Text>
                   </TouchableOpacity>
                 </>
+              )}
+              {/* ── Tenant & Owner: Agreements ── */}
               {(user?.role === 'tenant' || user?.role === 'owner') && (
                 <TouchableOpacity
                   style={styles.dropdownItem}
