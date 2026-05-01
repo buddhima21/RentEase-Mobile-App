@@ -16,6 +16,16 @@ import AnalyticsScreen from '../screens/shared/AnalyticsScreen';
 import AgreementsScreen from '../screens/agreements/AgreementsScreen';
 import AgreementDetailsScreen from '../screens/agreements/AgreementDetailsScreen';
 
+// ── Rent Payment & Tracking screens ──
+import TenantBillsScreen from '../screens/user/TenantBillsScreen';
+import RentPaymentScreen from '../screens/user/RentPaymentScreen';
+import TenantWalletScreen from '../screens/user/TenantWalletScreen';
+
+// ── Tenant Booking & Allocation screens ──
+import TenantBookingDashboard from '../screens/user/TenantBookingDashboard';
+import OwnerBookingRequestsScreen from '../screens/owner/OwnerBookingRequestsScreen';
+import OwnerAllocationHistoryScreen from '../screens/owner/OwnerAllocationHistoryScreen';
+
 const Stack = createNativeStackNavigator();
 
 export default function AppNavigator() {
@@ -30,8 +40,20 @@ export default function AppNavigator() {
       <Stack.Screen name="ManageProperty" component={ManagePropertyScreen} />
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
+
+      {/* ── Rent Payment & Tracking ── */}
+      <Stack.Screen name="TenantBills"   component={TenantBillsScreen} />
+      <Stack.Screen name="RentPayment"   component={RentPaymentScreen} />
+      <Stack.Screen name="TenantWallet"  component={TenantWalletScreen} />
+
+      {/* ── Tenant Booking & Allocation ── */}
+      <Stack.Screen name="TenantBookingDashboard" component={TenantBookingDashboard} />
+      <Stack.Screen name="OwnerBookingRequests" component={OwnerBookingRequestsScreen} />
+      <Stack.Screen name="OwnerAllocationHistory" component={OwnerAllocationHistoryScreen} />
+
       <Stack.Screen name="Reviews" component={ReviewScreen} />
       <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+      
       {/* Agreement & Contract Management */}
       <Stack.Screen name="Agreements" component={AgreementsScreen} />
       <Stack.Screen name="AgreementDetails" component={AgreementDetailsScreen} />

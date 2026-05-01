@@ -17,6 +17,9 @@ const linking = {
       OwnerDashboard: 'OwnerDashboard',
       ManageProperty: 'ManageProperty',
       AdminLogin: 'admin/login',
+      TenantBookingDashboard: 'TenantBookingDashboard',
+      OwnerBookingRequests: 'OwnerBookingRequests',
+      OwnerAllocationHistory: 'OwnerAllocationHistory',
     },
   },
 };

@@ -1,17 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View,
   Text,
   Image,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  
   Platform,
   ActivityIndicator,
   Alert,
-  RefreshControl,
-} from 'react-native';
+  RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -172,6 +171,39 @@ export default function OwnerDashboardScreen({ navigation }) {
           <StatCard label="Pending Review" value={isLoading ? '–' : pendingCount} icon="hourglass-top" iconColor="#f59e0b" badge="Awaiting admin" badgeColor="rgba(245,158,11,0.1)" badgeTextColor="#92400e" />
           <StatCard label="Approved" value={isLoading ? '–' : approvedCount} icon="verified" iconColor="#10b981" badge="Live now" badgeColor="rgba(16,185,129,0.1)" badgeTextColor="#065f46" />
           {rejectedCount > 0 && <StatCard label="Rejected" value={rejectedCount} icon="cancel" iconColor={Colors.error} badge="Needs attention" badgeColor="rgba(186,26,26,0.08)" badgeTextColor={Colors.error} />}
+        </View>
+
+        {/* ── BOOKING MANAGEMENT ── */}
+        <View style={styles.bookingMgmtSection}>
+          <TouchableOpacity
+            style={styles.bookingMgmtBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('OwnerBookingRequests')}
+          >
+            <View style={[styles.bookingMgmtIcon, { backgroundColor: 'rgba(245,158,11,0.12)' }]}>
+              <MaterialIcons name="pending-actions" size={22} color="#f59e0b" />
+            </View>
+            <View style={styles.bookingMgmtInfo}>
+              <Text style={styles.bookingMgmtTitle}>Booking Requests</Text>
+              <Text style={styles.bookingMgmtSub}>Review and manage pending bookings</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={Colors.onSurfaceVariant} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.bookingMgmtBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('OwnerAllocationHistory')}
+          >
+            <View style={[styles.bookingMgmtIcon, { backgroundColor: 'rgba(0,101,145,0.1)' }]}>
+              <MaterialIcons name="history" size={22} color={Colors.secondary} />
+            </View>
+            <View style={styles.bookingMgmtInfo}>
+              <Text style={styles.bookingMgmtTitle}>Allocation History</Text>
+              <Text style={styles.bookingMgmtSub}>View and manage tenant allocations</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={Colors.onSurfaceVariant} />
+          </TouchableOpacity>
         </View>
 
         {/* ── MY LISTINGS SECTION ── */}
@@ -346,4 +378,17 @@ const styles = StyleSheet.create({
   actionBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
   fab: { position: 'absolute', bottom: 80, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
   fabGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  // Booking Management
+  bookingMgmtSection: { marginBottom: 28, gap: 10 },
+  bookingMgmtBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#fff', borderRadius: 16, padding: 16,
+    shadowColor: '#191C1E', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+  },
+  bookingMgmtIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  bookingMgmtInfo: { flex: 1, gap: 2 },
+  bookingMgmtTitle: { fontSize: 15, fontWeight: '700', color: Colors.primary },
+  bookingMgmtSub: { fontSize: 12, color: Colors.onSurfaceVariant },
 });
