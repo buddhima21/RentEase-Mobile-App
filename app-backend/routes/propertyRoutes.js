@@ -8,12 +8,16 @@ const {
   deleteProperty,
   getAllProperties,
   updatePropertyStatus,
+  getPropertyById,
 } = require("../controllers/propertyController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
 // --- Public Routes ---
 // Get all APPROVED properties (for anyone browsing)
 router.get("/", getApprovedProperties);
+
+// Get a single property by ID (Public)
+router.get("/:id", getPropertyById);
 
 // --- Owner Routes ---
 // Manage their own properties

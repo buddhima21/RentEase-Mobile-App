@@ -257,6 +257,7 @@ export default function ListingsScreen({ navigation }) {
 
   const handleTabPress = (tabKey) => {
     if (tabKey === 'home') navigation.navigate('Home');
+    if (tabKey === 'inbox') navigation.navigate('Inbox');
   };
 
   const currentSortLabel = SORT_OPTIONS.find(o => o.id === sortBy)?.label || 'Sort';

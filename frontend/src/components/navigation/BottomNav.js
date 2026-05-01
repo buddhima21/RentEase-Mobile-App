@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../context/AuthContext';
+import { getUnreadCount } from '../../services/notificationService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const TABS_LOGGED_OUT = [
   { key: 'home', label: 'Home', icon: 'home' },
@@ -26,6 +28,18 @@ const TABS_ADMIN = [
 
 export default function BottomNav({ activeTab = 'home', onTabPress }) {
   const { user } = useAuth();
+  const [unreadCount, setUnreadCount] = React.useState(0);
+
+  // Fetch unread count whenever this component's screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user) {
+        getUnreadCount()
+          .then(setUnreadCount)
+          .catch(() => {});
+      }
+    }, [user])
+  );
   
   let tabs = TABS_LOGGED_OUT;
   if (user) {
@@ -49,11 +63,18 @@ export default function BottomNav({ activeTab = 'home', onTabPress }) {
             onPress={() => onTabPress && onTabPress(tab.key)}
             activeOpacity={0.7}
           >
-            <MaterialIcons
-              name={isActive && tab.key === 'home' ? 'home' : tab.icon}
-              size={24}
-              color={isActive ? '#155e75' : '#94a3b8'}
-            />
+            <View>
+              <MaterialIcons
+                name={isActive && tab.key === 'home' ? 'home' : tab.icon}
+                size={24}
+                color={isActive ? '#155e75' : '#94a3b8'}
+              />
+              {tab.key === 'inbox' && unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                </View>
+              )}
+            </View>
             <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
               {tab.label}
             </Text>
@@ -105,5 +126,22 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: '#155e75',
+  },
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#ba1a1a',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#fff',
+    fontSize: 9,
+    fontWeight: '800',
   },
 });

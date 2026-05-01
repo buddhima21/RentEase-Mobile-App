@@ -1,5 +1,6 @@
 const Booking = require("../models/Booking");
 const Property = require("../models/Property");
+const { createNotification } = require("./notificationController");
 
 // @desc    Create a new booking request
 // @route   POST /api/bookings
@@ -78,6 +79,26 @@ const createBooking = async (req, res) => {
       .populate("owner", "name email phone");
 
     res.status(201).json(populatedBooking);
+
+    // Notify the tenant: booking submitted
+    await createNotification({
+      recipient: req.user.id,
+      type: "booking_received",
+      title: "Booking Request Submitted",
+      body: `Your booking request for "${property.title}" has been sent to the owner and is awaiting approval.`,
+      refId: booking._id.toString(),
+      refModel: "Booking",
+    });
+
+    // Notify the owner: new booking received
+    await createNotification({
+      recipient: property.owner,
+      type: "booking_received",
+      title: "New Booking Request 📬",
+      body: `You have a new booking request for "${property.title}". Review it in your dashboard.`,
+      refId: booking._id.toString(),
+      refModel: "Booking",
+    });
   } catch (error) {
     console.error("Create Booking Error:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -213,6 +234,16 @@ const approveBooking = async (req, res) => {
       .populate("owner", "name email phone");
 
     res.status(200).json(populatedBooking);
+
+    // Notify the tenant that their booking was approved
+    await createNotification({
+      recipient: booking.tenant,
+      type: "booking_approved",
+      title: "Booking Approved 🎉",
+      body: `Your booking for "${populatedBooking.property?.title}" has been approved by the owner. Welcome home!`,
+      refId: booking._id.toString(),
+      refModel: "Booking",
+    });
   } catch (error) {
     console.error("Approve Booking Error:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -251,6 +282,16 @@ const rejectBooking = async (req, res) => {
       .populate("owner", "name email phone");
 
     res.status(200).json(populatedBooking);
+
+    // Notify the tenant that their booking was rejected
+    await createNotification({
+      recipient: booking.tenant,
+      type: "booking_rejected",
+      title: "Booking Request Declined",
+      body: `Your booking for "${populatedBooking.property?.title}" was declined by the owner. Reason: ${booking.rejectionReason}`,
+      refId: booking._id.toString(),
+      refModel: "Booking",
+    });
   } catch (error) {
     console.error("Reject Booking Error:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -286,6 +327,16 @@ const removeTenant = async (req, res) => {
       .populate("owner", "name email phone");
 
     res.status(200).json(populatedBooking);
+
+    // Notify the tenant they have been removed
+    await createNotification({
+      recipient: booking.tenant,
+      type: "booking_removed",
+      title: "Tenancy Ended",
+      body: `Your tenancy for "${populatedBooking.property?.title}" has ended. You have been removed from the property.`,
+      refId: booking._id.toString(),
+      refModel: "Booking",
+    });
   } catch (error) {
     console.error("Remove Tenant Error:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });

@@ -125,9 +125,9 @@ export default function ManagePropertyScreen({ navigation, route }) {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: true,
-      quality: 0.7,
+      quality: 0.2,
       base64: true,
       selectionLimit: 6 - images.length,
     });
