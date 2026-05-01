@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View,
   Text,
   TextInput,
   ScrollView,
   TouchableOpacity,
   Image,
   StyleSheet,
-  SafeAreaView,
+  
   Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
   Alert,
-  Modal,
-} from 'react-native';
+  Modal } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
