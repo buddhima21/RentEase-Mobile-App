@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,9 +10,11 @@ import {
   Platform,
   Linking,
   Alert,
+  Modal,
+  Pressable,
   TextInput,
-  KeyboardAvoidingView,
-  ActivityIndicator
+  ActivityIndicator,
+  KeyboardAvoidingView
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -20,7 +22,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { useFocusEffect } from '@react-navigation/native';
 import Colors from '../../constants/Colors';
 import DetailHeader from '../../components/navigation/DetailHeader';
+import AmenityItem from '../../components/ui/AmenityItem';
 import { useAuth } from '../../context/AuthContext';
+import { createBooking, getPropertyAvailability } from '../../services/bookingService';
+import { getPropertyById } from '../../services/propertyService';
 import API from '../../services/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -167,13 +172,26 @@ function ReviewCard({ review, currentUserId, onDelete }) {
 }
 
 export default function PropertyDetailsScreen({ navigation, route }) {
+  const { user } = useAuth();
   const [activeSlide, setActiveSlide] = useState(0);
   const scrollRef = useRef(null);
-  const { user } = useAuth();
 
+  // ── Booking modal state ──
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [preferredDate, setPreferredDate] = useState('');
+  const [idDocument, setIdDocument] = useState(null);
+  const [idDocumentName, setIdDocumentName] = useState('');
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [availability, setAvailability] = useState(null);
+  const [availLoading, setAvailLoading] = useState(false);
+
+  // ── Full property fetch state ──
+  const [fullProperty, setFullProperty] = useState(null);
+
+  // ── Consume real property from route params ──
   const raw = route?.params?.property || {};
 
-  const property = {
+  const baseProperty = {
     id:              raw.id   || raw._id,
     title:           raw.title           || 'Property Listing',
     location:        raw.location        || 'Location not specified',
@@ -192,7 +210,49 @@ export default function PropertyDetailsScreen({ navigation, route }) {
     status:          raw.status,
   };
 
+  // Override with full details if fetched
+  const property = fullProperty || baseProperty;
+
   const typeColor = getTypeColor(property.propertyType);
+
+  // ── Fetch property availability ──
+  const fetchAvailability = useCallback(async () => {
+    if (!baseProperty.id) return;
+    try {
+      setAvailLoading(true);
+      const data = await getPropertyAvailability(baseProperty.id);
+      setAvailability(data);
+    } catch (err) {
+      console.error('Availability fetch error:', err);
+    } finally {
+      setAvailLoading(false);
+    }
+  }, [baseProperty.id]);
+
+  const fetchFullProperty = useCallback(async () => {
+    if (!baseProperty.id) return;
+    try {
+      const data = await getPropertyById(baseProperty.id);
+      // Ensure amenities and images are arrays
+      setFullProperty({
+        ...data,
+        id: data._id,
+        beds: data.bedrooms,
+        baths: data.bathrooms,
+        priceRaw: data.price,
+        price: `LKR ${Number(data.price).toLocaleString()}`,
+        amenities: Array.isArray(data.amenities) ? data.amenities : [],
+        images: Array.isArray(data.images) && data.images.length > 0 ? data.images : baseProperty.images,
+      });
+    } catch (err) {
+      console.log('Error fetching full property details', err);
+    }
+  }, [baseProperty.id]);
+
+  useEffect(() => { 
+    fetchAvailability(); 
+    fetchFullProperty();
+  }, [fetchAvailability, fetchFullProperty]);
 
   // ── Review State ──
   const [reviews, setReviews] = useState([]);
@@ -235,6 +295,85 @@ export default function PropertyDetailsScreen({ navigation, route }) {
   const handleEmailOwner = () => {
     if (property.owner?.email) {
       Linking.openURL(`mailto:${property.owner.email}?subject=Inquiry about ${property.title}`);
+    }
+  };
+
+  // ── Booking handlers ──
+  const handleBookTourPress = () => {
+    if (!user) {
+      Alert.alert('Sign In Required', 'Please sign in as a tenant to book this property.', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Sign In', onPress: () => navigation.navigate('Login') },
+      ]);
+      return;
+    }
+    if (user.role !== 'tenant') {
+      Alert.alert('Tenant Only', 'Only tenants can book properties.');
+      return;
+    }
+    if (availability?.isFullyBooked) {
+      Alert.alert('Fully Booked', 'All bedrooms in this property are currently occupied.');
+      return;
+    }
+    setShowBookingModal(true);
+  };
+
+  const handlePickDocument = async () => {
+    const permResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permResult.granted) {
+      Alert.alert('Permission Denied', 'We need access to your photos to upload an ID document.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      quality: 0.7,
+      base64: true,
+    });
+    if (!result.canceled && result.assets?.[0]) {
+      const asset = result.assets[0];
+      const uri = asset.uri;
+      const fileName = uri.split('/').pop() || 'id_document';
+      const base64Data = `data:image/jpeg;base64,${asset.base64}`;
+      setIdDocument(base64Data);
+      setIdDocumentName(fileName);
+    }
+  };
+
+  const validateDate = (dateStr) => {
+    if (!dateStr) return false;
+    const regex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!regex.test(dateStr)) return false;
+    const d = new Date(dateStr);
+    const today = new Date(); today.setHours(0,0,0,0);
+    return d instanceof Date && !isNaN(d) && d >= today;
+  };
+
+  const handleSubmitBooking = async () => {
+    if (!preferredDate || !validateDate(preferredDate)) {
+      Alert.alert('Invalid Date', 'Please enter a valid future date in YYYY-MM-DD format.');
+      return;
+    }
+
+    try {
+      setBookingLoading(true);
+      await createBooking({
+        propertyId: property.id,
+        preferredDate,
+        idDocument,
+        idDocumentName,
+      });
+      setShowBookingModal(false);
+      setPreferredDate('');
+      setIdDocument(null);
+      setIdDocumentName('');
+      fetchAvailability();
+      Alert.alert('Booking Submitted! ✅', 'Your booking request has been sent to the property owner. You can track the status in your Booking Dashboard.');
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to submit booking. Please try again.';
+      Alert.alert('Booking Failed', msg);
+    } finally {
+      setBookingLoading(false);
     }
   };
 
@@ -301,7 +440,6 @@ export default function PropertyDetailsScreen({ navigation, route }) {
   };
 
   const removeReviewImage = (index) => setReviewImages(prev => prev.filter((_, i) => i !== index));
-
   return (
     <View style={styles.container}>
       <ScrollView
@@ -609,6 +747,16 @@ export default function PropertyDetailsScreen({ navigation, route }) {
         onShare={() => {}}
       />
 
+      {/* ── Availability Badge ── */}
+      {availability && (
+        <View style={[styles.availBadge, availability.isFullyBooked ? styles.availBadgeFull : styles.availBadgeOpen]}>
+          <MaterialIcons name={availability.isFullyBooked ? 'block' : 'check-circle'} size={16} color={availability.isFullyBooked ? '#991b1b' : '#065f46'} />
+          <Text style={[styles.availBadgeText, { color: availability.isFullyBooked ? '#991b1b' : '#065f46' }]}>
+            {availability.isFullyBooked ? 'Fully Booked' : `${availability.availableBedrooms} of ${availability.totalBedrooms} bedrooms available`}
+          </Text>
+        </View>
+      )}
+
       {/* ── Fixed Action Bar ── */}
       <View style={styles.actionBar}>
         <View style={styles.actionPriceBlock}>
@@ -629,19 +777,94 @@ export default function PropertyDetailsScreen({ navigation, route }) {
             <Text style={styles.contactBtnText}>Contact</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.bookBtn} activeOpacity={0.85}>
+          <TouchableOpacity
+            style={[styles.bookBtn, availability?.isFullyBooked && { opacity: 0.5 }]}
+            activeOpacity={0.85}
+            onPress={handleBookTourPress}
+            disabled={availability?.isFullyBooked}
+          >
             <LinearGradient
-              colors={[Colors.secondary, '#00486b']}
+              colors={availability?.isFullyBooked ? ['#9ca3af', '#6b7280'] : [Colors.secondary, '#00486b']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.bookGradient}
             >
-              <MaterialIcons name="calendar-today" size={18} color="#fff" />
-              <Text style={styles.bookText}>Book Tour</Text>
+              <MaterialIcons name={availability?.isFullyBooked ? 'block' : 'calendar-today'} size={18} color="#fff" />
+              <Text style={styles.bookText}>{availability?.isFullyBooked ? 'Fully Booked' : 'Book Tour'}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* ── Booking Modal ── */}
+      <Modal visible={showBookingModal} transparent animationType="slide" onRequestClose={() => setShowBookingModal(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setShowBookingModal(false)}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Book This Property</Text>
+            <Text style={styles.modalSubtitle}>{property.title}</Text>
+
+            {/* Date Input */}
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Preferred Date *</Text>
+              <View style={styles.modalInputRow}>
+                <MaterialIcons name="event" size={20} color={Colors.secondary} />
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#94a3b8"
+                  value={preferredDate}
+                  onChangeText={setPreferredDate}
+                  keyboardType="default"
+                  maxLength={10}
+                />
+              </View>
+              <Text style={styles.modalHint}>Enter date as YYYY-MM-DD (e.g. 2026-06-15)</Text>
+            </View>
+
+            {/* ID Document Upload */}
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>ID Document / Photo (Optional)</Text>
+              <TouchableOpacity style={styles.uploadBtn} activeOpacity={0.7} onPress={handlePickDocument}>
+                <MaterialIcons name={idDocument ? 'check-circle' : 'cloud-upload'} size={24} color={idDocument ? '#059669' : Colors.secondary} />
+                <Text style={[styles.uploadBtnText, idDocument && { color: '#059669' }]}>
+                  {idDocument ? idDocumentName : 'Tap to upload ID document'}
+                </Text>
+              </TouchableOpacity>
+              {idDocument && (
+                <Image source={{ uri: idDocument }} style={styles.docPreview} resizeMode="cover" />
+              )}
+            </View>
+
+            {/* Submit Button */}
+            <TouchableOpacity
+              style={[styles.submitBookingBtn, bookingLoading && { opacity: 0.6 }]}
+              activeOpacity={0.85}
+              onPress={handleSubmitBooking}
+              disabled={bookingLoading}
+            >
+              <LinearGradient
+                colors={[Colors.secondary, '#00486b']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={styles.submitBookingGradient}
+              >
+                {bookingLoading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <MaterialIcons name="send" size={18} color="#fff" />
+                    <Text style={styles.submitBookingText}>Submit Booking Request</Text>
+                  </>
+                )}
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowBookingModal(false)}>
+              <Text style={styles.cancelModalText}>Cancel</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -846,4 +1069,29 @@ const styles = StyleSheet.create({
   bookBtn: { borderRadius: 14, overflow: 'hidden', shadowColor: Colors.secondary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 8 },
   bookGradient: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 20, paddingVertical: 14 },
   bookText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  // ── Availability Badge ──
+  availBadge: { position: 'absolute', bottom: 90, left: 20, right: 20, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12 },
+  availBadgeOpen: { backgroundColor: 'rgba(16,185,129,0.12)', borderWidth: 1, borderColor: 'rgba(16,185,129,0.2)' },
+  availBadgeFull: { backgroundColor: 'rgba(186,26,26,0.08)', borderWidth: 1, borderColor: 'rgba(186,26,26,0.15)' },
+  availBadgeText: { fontSize: 13, fontWeight: '600' },
+
+  // ── Booking Modal ──
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 12, paddingBottom: Platform.OS === 'ios' ? 40 : 24, maxHeight: '85%' },
+  modalHandle: { width: 40, height: 4, backgroundColor: Colors.outlineVariant, borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  modalTitle: { fontSize: 22, fontWeight: '800', color: Colors.primary, marginBottom: 4 },
+  modalSubtitle: { fontSize: 14, color: Colors.onSurfaceVariant, marginBottom: 24 },
+  modalField: { marginBottom: 20 },
+  modalLabel: { fontSize: 14, fontWeight: '700', color: Colors.primary, marginBottom: 8 },
+  modalInputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.surfaceContainerLow, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: Colors.outlineVariant },
+  modalInput: { flex: 1, fontSize: 16, color: Colors.primary, fontWeight: '500' },
+  modalHint: { fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 4, marginLeft: 4 },
+  uploadBtn: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.surfaceContainerLow, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, borderWidth: 1, borderColor: Colors.outlineVariant, borderStyle: 'dashed' },
+  uploadBtnText: { fontSize: 14, color: Colors.secondary, fontWeight: '600', flex: 1 },
+  docPreview: { width: '100%', height: 120, borderRadius: 12, marginTop: 10 },
+  submitBookingBtn: { borderRadius: 14, overflow: 'hidden', marginTop: 8 },
+  submitBookingGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },
+  submitBookingText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  cancelModalBtn: { alignItems: 'center', paddingVertical: 14, marginTop: 4 },
+  cancelModalText: { fontSize: 15, fontWeight: '600', color: Colors.onSurfaceVariant },
 });

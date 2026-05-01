@@ -1,17 +1,16 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View,
   Text,
   Image,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  
   Platform,
   ActivityIndicator,
   Alert,
-  RefreshControl,
-} from 'react-native';
+  RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
@@ -104,6 +103,7 @@ export default function OwnerDashboardScreen({ navigation }) {
     setActiveTab(tabKey);
     if (tabKey === 'home') navigation.navigate('Home');
     if (tabKey === 'listings') navigation.navigate('Listings');
+    if (tabKey === 'inbox') navigation.navigate('Inbox');
   };
 
   const totalListings  = properties.length;
@@ -172,6 +172,39 @@ export default function OwnerDashboardScreen({ navigation }) {
           <StatCard label="Pending Review" value={isLoading ? '–' : pendingCount} icon="hourglass-top" iconColor="#f59e0b" badge="Awaiting admin" badgeColor="rgba(245,158,11,0.1)" badgeTextColor="#92400e" />
           <StatCard label="Approved" value={isLoading ? '–' : approvedCount} icon="verified" iconColor="#10b981" badge="Live now" badgeColor="rgba(16,185,129,0.1)" badgeTextColor="#065f46" />
           {rejectedCount > 0 && <StatCard label="Rejected" value={rejectedCount} icon="cancel" iconColor={Colors.error} badge="Needs attention" badgeColor="rgba(186,26,26,0.08)" badgeTextColor={Colors.error} />}
+        </View>
+
+        {/* ── BOOKING MANAGEMENT ── */}
+        <View style={styles.bookingMgmtSection}>
+          <TouchableOpacity
+            style={styles.bookingMgmtBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('OwnerBookingRequests')}
+          >
+            <View style={[styles.bookingMgmtIcon, { backgroundColor: 'rgba(245,158,11,0.12)' }]}>
+              <MaterialIcons name="pending-actions" size={22} color="#f59e0b" />
+            </View>
+            <View style={styles.bookingMgmtInfo}>
+              <Text style={styles.bookingMgmtTitle}>Booking Requests</Text>
+              <Text style={styles.bookingMgmtSub}>Review and manage pending bookings</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={Colors.onSurfaceVariant} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.bookingMgmtBtn}
+            activeOpacity={0.8}
+            onPress={() => navigation.navigate('OwnerAllocationHistory')}
+          >
+            <View style={[styles.bookingMgmtIcon, { backgroundColor: 'rgba(0,101,145,0.1)' }]}>
+              <MaterialIcons name="history" size={22} color={Colors.secondary} />
+            </View>
+            <View style={styles.bookingMgmtInfo}>
+              <Text style={styles.bookingMgmtTitle}>Allocation History</Text>
+              <Text style={styles.bookingMgmtSub}>View and manage tenant allocations</Text>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={Colors.onSurfaceVariant} />
+          </TouchableOpacity>
         </View>
 
         {/* ── MY LISTINGS SECTION ── */}
@@ -253,9 +286,21 @@ function PropertyCard({ property, onEdit, onDelete, onPress }) {
     <TouchableOpacity style={styles.listingCard} activeOpacity={0.9} onPress={onPress}>
       <Image source={{ uri: coverImage }} style={styles.listingImage} />
       <View style={styles.listingContent}>
-        <View style={[styles.statusPill, { backgroundColor: statusStyle.bg }]}><Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text></View>
+        <View style={[styles.statusPill, { backgroundColor: statusStyle.bg }]}>
+          <Text style={[styles.statusText, { color: statusStyle.text }]}>{statusStyle.label}</Text>
+        </View>
         <Text style={styles.listingTitle}>{property.title}</Text>
-        <View style={styles.locationRow}><MaterialIcons name="location-on" size={13} color={Colors.onSurfaceVariant} /><Text style={styles.locationText}>{property.location}</Text></View>
+        <View style={styles.locationRow}>
+          <MaterialIcons name="location-on" size={13} color={Colors.onSurfaceVariant} />
+          <Text style={styles.locationText}>{property.location}</Text>
+        </View>
+        {/* Rejection Reason — visible only to owner */}
+        {property.status === 'rejected' && !!property.rejectionReason ? (
+          <View style={styles.rejectionBanner}>
+            <MaterialIcons name="info-outline" size={14} color="#991b1b" />
+            <Text style={styles.rejectionReasonText}>{property.rejectionReason}</Text>
+          </View>
+        ) : null}
         <View style={styles.actionBtns}>
           <TouchableOpacity onPress={onEdit}><MaterialIcons name="edit" size={20} color={Colors.primary} /></TouchableOpacity>
           <TouchableOpacity onPress={onDelete}><MaterialIcons name="delete" size={20} color={Colors.error} /></TouchableOpacity>
@@ -346,4 +391,38 @@ const styles = StyleSheet.create({
   actionBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
   fab: { position: 'absolute', bottom: 80, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
   fabGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+
+  // Rejection reason banner (shown on owner's rejected properties)
+  rejectionBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: 'rgba(153,27,27,0.08)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#991b1b',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  rejectionReasonText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#991b1b',
+    fontWeight: '600',
+    lineHeight: 17,
+  },
+
+  // Booking Management
+  bookingMgmtSection: { marginBottom: 28, gap: 10 },
+  bookingMgmtBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: '#fff', borderRadius: 16, padding: 16,
+    shadowColor: '#191C1E', shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
+  },
+  bookingMgmtIcon: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  bookingMgmtInfo: { flex: 1, gap: 2 },
+  bookingMgmtTitle: { fontSize: 15, fontWeight: '700', color: Colors.primary },
+  bookingMgmtSub: { fontSize: 12, color: Colors.onSurfaceVariant },
 });

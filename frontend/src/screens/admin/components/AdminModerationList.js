@@ -53,9 +53,9 @@ export default function AdminModerationList({ properties = [], onApprove, onReje
           <View style={styles.emptyState}>
             <MaterialIcons name="inbox" size={48} color="#c5c6cd" />
             <Text style={styles.emptyStateText}>No properties found for this category.</Text>
-            {activeFilter === 'Draft' && (
+            {activeFilter === 'Draft' ? (
               <Text style={styles.emptyStateSubtext}>Deleted properties are removed permanently by default.</Text>
-            )}
+            ) : null}
           </View>
         ) : (
           filteredProperties.map((property) => (
@@ -78,19 +78,19 @@ export default function AdminModerationList({ properties = [], onApprove, onReje
                 </View>
                 
                 <View style={styles.features}>
-                  {property.beds && (
+                  {!!property.beds && (
                     <View style={styles.featureItem}>
                       <MaterialIcons name="bed" size={14} color="#45474c" />
                       <Text style={styles.featureText}>{property.beds} Beds</Text>
                     </View>
                   )}
-                  {property.baths && (
+                  {!!property.baths && (
                     <View style={styles.featureItem}>
                       <MaterialIcons name="bathtub" size={14} color="#45474c" />
                       <Text style={styles.featureText}>{property.baths} Baths</Text>
                     </View>
                   )}
-                  {property.owner?.name && (
+                  {!!property.owner?.name && (
                     <View style={styles.featureItem}>
                       <MaterialIcons name="person" size={14} color="#45474c" />
                       <Text style={styles.featureText}>By {property.owner.name}</Text>
@@ -100,23 +100,33 @@ export default function AdminModerationList({ properties = [], onApprove, onReje
 
                 <Text style={styles.desc} numberOfLines={2}>{property.description}</Text>
 
+                {/* Rejection Reason Banner */}
+                {property.status === 'rejected' && !!property.rejectionReason ? (
+                  <View style={styles.rejectionBanner}>
+                    <MaterialIcons name="cancel" size={14} color="#ba1a1a" />
+                    <Text style={styles.rejectionText} numberOfLines={2}>
+                      {property.rejectionReason}
+                    </Text>
+                  </View>
+                ) : null}
+
                 <View style={styles.actions}>
-                  {property.status !== 'approved' && (
+                  {property.status !== 'approved' ? (
                     <TouchableOpacity 
                       style={[styles.actionBtn, styles.approveBtn]}
                       onPress={() => onApprove(property.id)}
                     >
                       <Text style={styles.actionBtnText}>Approve</Text>
                     </TouchableOpacity>
-                  )}
-                  {property.status !== 'rejected' && (
+                  ) : null}
+                  {property.status !== 'rejected' ? (
                     <TouchableOpacity 
                       style={[styles.actionBtn, styles.rejectBtn]}
                       onPress={() => onReject(property.id)}
                     >
                       <Text style={styles.actionBtnText}>Reject</Text>
                     </TouchableOpacity>
-                  )}
+                  ) : null}
                 </View>
               </View>
             </TouchableOpacity>
@@ -297,5 +307,24 @@ const styles = StyleSheet.create({
     color: '#75777d',
     textAlign: 'center',
     paddingHorizontal: 32,
-  }
+  },
+  rejectionBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    backgroundColor: 'rgba(186,26,26,0.08)',
+    borderLeftWidth: 3,
+    borderLeftColor: '#ba1a1a',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  rejectionText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#ba1a1a',
+    fontWeight: '600',
+    lineHeight: 18,
+  },
 });

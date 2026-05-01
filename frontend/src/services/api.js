@@ -13,6 +13,12 @@ function getBaseUrl() {
     return 'http://localhost:5000/api';
   }
 
+  // Android Emulator uses 10.0.2.2 to access localhost of the host machine
+  // Android Emulator must use 10.0.2.2 to access the Mac's localhost
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:5000/api';
+  }
+
   // Expo Go on physical device – use the dev server's host IP
   const debuggerHost =
     Constants.expoConfig?.hostUri || // SDK 49+
@@ -24,13 +30,13 @@ function getBaseUrl() {
     return `http://${hostIp}:5000/api`;
   }
 
-  // Fallback – user's known Wi-Fi IP
-  return 'http://192.168.8.244:5000/api';
+  // Fallback
+  return 'http://172.28.8.99:5000/api';
 }
 
 const API = axios.create({
   baseURL: getBaseUrl(),
-  timeout: 15000,
+  timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
 

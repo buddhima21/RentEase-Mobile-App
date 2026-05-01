@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView,  Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AdminHeader from './components/AdminHeader';
 import AdminStatsGrid from './components/AdminStatsGrid';
@@ -57,7 +58,7 @@ export default function AdminDashboardScreen({ navigation }) {
     try {
       await updatePropertyStatus(propertyId, 'approved');
       setProperties(prev => prev.map(p => 
-        p.id === propertyId ? { ...p, status: 'approved' } : p
+        p.id === propertyId ? { ...p, status: 'approved', rejectionReason: null } : p
       ));
       Alert.alert("Success", "Property approved successfully.");
     } catch (err) {
@@ -77,11 +78,13 @@ export default function AdminDashboardScreen({ navigation }) {
       return;
     }
     
+    const reason = rejectReason.trim();
+    const targetId = rejectPropertyId;
     setRejectModalVisible(false);
     try {
-      await updatePropertyStatus(rejectPropertyId, 'rejected', rejectReason);
+      await updatePropertyStatus(targetId, 'rejected', reason);
       setProperties(prev => prev.map(p => 
-        p.id === rejectPropertyId ? { ...p, status: 'rejected' } : p
+        p.id === targetId ? { ...p, status: 'rejected', rejectionReason: reason } : p
       ));
       Alert.alert("Success", "Property rejected successfully.");
     } catch (err) {

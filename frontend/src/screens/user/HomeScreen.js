@@ -1,18 +1,17 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  View,
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { View,
   Text,
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
+  
   Platform,
   Animated,
   Modal,
   Pressable,
   ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+  RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import CategoryChip from '../../components/ui/CategoryChip';
 import FeaturedCard from '../../components/cards/FeaturedCard';
@@ -122,6 +121,7 @@ export default function HomeScreen({ navigation }) {
     if (tabKey === 'listings') navigation.navigate('Listings');
     else if (tabKey === 'login') navigation.navigate('Login');
     else if (tabKey === 'profile') setShowProfileMenu(true);
+    else if (tabKey === 'inbox') navigation.navigate('Inbox');
   };
 
   const handleLogout = async () => {
@@ -323,6 +323,14 @@ export default function HomeScreen({ navigation }) {
                   <Text style={styles.dropdownItemText}>My Properties</Text>
                 </TouchableOpacity>
               )}
+              {/* ── Tenant: Booking Dashboard ── */}
+              {(user?.role === 'tenant' || user?.role === 'user') && (
+                <TouchableOpacity style={styles.dropdownItem} activeOpacity={0.7}
+                  onPress={() => { setShowProfileMenu(false); navigation.navigate('TenantBookingDashboard'); }}>
+                  <MaterialIcons name="book-online" size={20} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.dropdownItemText}>My Bookings</Text>
+                </TouchableOpacity>
+              )}
               {/* ── Tenant: Rent Payment & Tracking ── */}
               {(user?.role === 'tenant' || user?.role === 'user') && (
                 <>
@@ -337,6 +345,8 @@ export default function HomeScreen({ navigation }) {
                     <Text style={styles.dropdownItemText}>My Wallet</Text>
                   </TouchableOpacity>
                 </>
+              )}
+              {/* ── Tenant & Owner: Agreements ── */}
               {(user?.role === 'tenant' || user?.role === 'owner') && (
                 <TouchableOpacity
                   style={styles.dropdownItem}

@@ -26,6 +26,16 @@ app.use("/api/reviews", require("./routes/reviewRoutes"));
 app.use("/api/analytics", require("./routes/analyticsRoutes"));
 app.use("/api/agreements", require("./routes/agreementRoutes"));
 
+// ── Tenant Booking & Allocation routes ──
+app.use("/api/bookings",  require("./routes/bookingRoutes"));
+
+// ── Invoice, Wallet, Bank Card & Payment routes ──
+app.use("/api/invoices",       require("./routes/invoiceRoutes"));
+app.use("/api/wallet",         require("./routes/walletRoutes"));
+app.use("/api/bank-cards",     require("./routes/bankCardRoutes"));
+app.use("/api/payments",       require("./routes/paymentRoutes"));
+app.use("/api/notifications",  require("./routes/notificationRoutes"));
+
 // Test route
 app.get("/", (req, res) => {
   res.json({ message: "RentEase API is running 🚀" });
