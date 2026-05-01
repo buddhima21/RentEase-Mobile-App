@@ -12,6 +12,9 @@ import AdminLoginScreen from '../screens/admin/AdminLoginScreen';
 import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import ReviewScreen from '../screens/user/ReviewScreen';
 import AnalyticsScreen from '../screens/shared/AnalyticsScreen';
+// ── Agreement screens (new) ──────────────────────────────────────────────────
+import AgreementsScreen from '../screens/agreements/AgreementsScreen';
+import AgreementDetailsScreen from '../screens/agreements/AgreementDetailsScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +32,9 @@ export default function AppNavigator() {
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
       <Stack.Screen name="Reviews" component={ReviewScreen} />
       <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+      {/* Agreement & Contract Management */}
+      <Stack.Screen name="Agreements" component={AgreementsScreen} />
+      <Stack.Screen name="AgreementDetails" component={AgreementDetailsScreen} />
     </Stack.Navigator>
   );
 }
