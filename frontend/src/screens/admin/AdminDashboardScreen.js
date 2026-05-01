@@ -104,6 +104,7 @@ export default function AdminDashboardScreen({ navigation }) {
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => fetchProperties(true)} />
         }
@@ -111,6 +112,9 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={styles.sectionHeader}>
           <Text style={styles.title}>Admin Dashboard</Text>
           <Text style={styles.subtitle}>Manage platform activity and approve new property listings.</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Analytics')} style={styles.analyticsBtn}>
+            <Text style={styles.analyticsBtnText}>View System Analytics</Text>
+          </TouchableOpacity>
         </View>
 
         <AdminStatsGrid 
@@ -185,6 +189,8 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' && { fontSize: 36 }),
   },
   subtitle: { fontSize: 18, color: '#45474c' },
+  analyticsBtn: { marginTop: 16, backgroundColor: '#091426', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, alignSelf: 'flex-start' },
+  analyticsBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   bottomNavContainer: { position: 'absolute', bottom: 0, width: '100%' },
 
   // Modal Styles

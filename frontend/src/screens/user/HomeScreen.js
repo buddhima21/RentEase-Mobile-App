@@ -323,6 +323,20 @@ export default function HomeScreen({ navigation }) {
                   <Text style={styles.dropdownItemText}>My Properties</Text>
                 </TouchableOpacity>
               )}
+              {/* ── Tenant: Rent Payment & Tracking ── */}
+              {(user?.role === 'tenant' || user?.role === 'user') && (
+                <>
+                  <TouchableOpacity style={styles.dropdownItem} activeOpacity={0.7}
+                    onPress={() => { setShowProfileMenu(false); navigation.navigate('TenantBills'); }}>
+                    <MaterialIcons name="receipt-long" size={20} color={Colors.onSurfaceVariant} />
+                    <Text style={styles.dropdownItemText}>My Bills</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.dropdownItem} activeOpacity={0.7}
+                    onPress={() => { setShowProfileMenu(false); navigation.navigate('TenantWallet'); }}>
+                    <MaterialIcons name="account-balance-wallet" size={20} color={Colors.onSurfaceVariant} />
+                    <Text style={styles.dropdownItemText}>My Wallet</Text>
+                  </TouchableOpacity>
+                </>
               {(user?.role === 'tenant' || user?.role === 'owner') && (
                 <TouchableOpacity
                   style={styles.dropdownItem}
