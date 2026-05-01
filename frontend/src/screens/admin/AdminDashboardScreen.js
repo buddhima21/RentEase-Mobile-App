@@ -118,6 +118,9 @@ export default function AdminDashboardScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.navigate('Analytics')} style={styles.analyticsBtn}>
             <Text style={styles.analyticsBtnText}>View System Analytics</Text>
           </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('AdminMaintenanceHub')} style={[styles.analyticsBtn, { backgroundColor: '#ba1a1a', marginTop: 8 }]}>
+            <Text style={styles.analyticsBtnText}>Manage Maintenance</Text>
+          </TouchableOpacity>
         </View>
 
         <AdminStatsGrid 

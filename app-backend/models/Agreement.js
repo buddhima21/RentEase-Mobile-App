@@ -72,14 +72,13 @@ const agreementSchema = new mongoose.Schema(
 );
 
 // Auto-generate agreement number before saving
-agreementSchema.pre("save", async function (next) {
+agreementSchema.pre("save", async function () {
   if (!this.agreementNumber) {
     const year = new Date().getFullYear();
     const count = await mongoose.model("Agreement").countDocuments();
     const seq = String(count + 1).padStart(4, "0");
     this.agreementNumber = `AGR-${year}-${seq}`;
   }
-  next();
 });
 
 module.exports = mongoose.model("Agreement", agreementSchema);

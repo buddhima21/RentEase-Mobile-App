@@ -357,6 +357,17 @@ export default function HomeScreen({ navigation }) {
                   <Text style={styles.dropdownItemText}>My Agreements</Text>
                 </TouchableOpacity>
               )}
+              {/* ── Tenant: Maintenance ── */}
+              {user?.role === 'tenant' && (
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  activeOpacity={0.7}
+                  onPress={() => { setShowProfileMenu(false); navigation.navigate('MaintenanceHub'); }}
+                >
+                  <MaterialIcons name="build" size={20} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.dropdownItemText}>Maintenance Requests</Text>
+                </TouchableOpacity>
+              )}
               <View style={styles.dropdownDivider} />
               <TouchableOpacity style={styles.dropdownItemLogout} activeOpacity={0.7} onPress={handleLogout}>
                 <MaterialIcons name="logout" size={20} color={Colors.error} />
