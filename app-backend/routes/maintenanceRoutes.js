@@ -20,7 +20,7 @@ router.route("/my")
 
 router.route("/:id")
   .get(protect, getMaintenanceRequestById)
-  .put(protect, updateMaintenanceRequest)
+  .put(protect, authorizeRoles("admin", "tenant"), updateMaintenanceRequest)
   .delete(protect, authorizeRoles("tenant"), deleteMaintenanceRequest);
 
 module.exports = router;

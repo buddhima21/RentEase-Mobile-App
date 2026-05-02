@@ -1,6 +1,22 @@
 const MaintenanceRequest = require("../models/MaintenanceRequest");
 const Agreement = require("../models/Agreement");
 
+const isInvalidObjectIdError = (error) =>
+  error?.name === "CastError" && error?.kind === "ObjectId";
+
+const handleMaintenanceError = (res, error, fallbackMessage) => {
+  if (isInvalidObjectIdError(error)) {
+    return res.status(400).json({ message: "Invalid maintenance request id." });
+  }
+
+  if (error?.name === "ValidationError") {
+    return res.status(400).json({ message: error.message });
+  }
+
+  console.error(error);
+  return res.status(500).json({ message: fallbackMessage });
+};
+
 // @desc    Create a new maintenance request
 // @route   POST /api/maintenance
 // @access  Private (Tenant)
@@ -48,8 +64,11 @@ const createMaintenanceRequest = async (req, res) => {
 
     res.status(201).json(newRequest);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not create maintenance request." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not create maintenance request."
+    );
   }
 };
 
@@ -64,8 +83,11 @@ const getMyMaintenanceRequests = async (req, res) => {
 
     res.status(200).json(requests);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not fetch requests." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not fetch requests."
+    );
   }
 };
 
@@ -81,8 +103,11 @@ const getAllMaintenanceRequests = async (req, res) => {
 
     res.status(200).json(requests);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not fetch all requests." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not fetch all requests."
+    );
   }
 };
 
@@ -109,8 +134,11 @@ const getMaintenanceRequestById = async (req, res) => {
 
     res.status(200).json(request);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not fetch request details." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not fetch request details."
+    );
   }
 };
 
@@ -159,8 +187,11 @@ const updateMaintenanceRequest = async (req, res) => {
     const updatedRequest = await request.save();
     res.status(200).json(updatedRequest);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not update request." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not update request."
+    );
   }
 };
 
@@ -190,8 +221,11 @@ const deleteMaintenanceRequest = async (req, res) => {
     await MaintenanceRequest.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Maintenance request deleted." });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not delete request." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not delete request."
+    );
   }
 };
 
