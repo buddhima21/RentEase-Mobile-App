@@ -1,5 +1,21 @@
 const MaintenanceRequest = require("../models/MaintenanceRequest");
-const Agreement = require("../models/Agreement");
+const Booking = require("../models/Booking");
+
+const isInvalidObjectIdError = (error) =>
+  error?.name === "CastError" && error?.kind === "ObjectId";
+
+const handleMaintenanceError = (res, error, fallbackMessage) => {
+  if (isInvalidObjectIdError(error)) {
+    return res.status(400).json({ message: "Invalid maintenance request id." });
+  }
+
+  if (error?.name === "ValidationError") {
+    return res.status(400).json({ message: error.message });
+  }
+
+  console.error(error);
+  return res.status(500).json({ message: fallbackMessage });
+};
 
 // @desc    Create a new maintenance request
 // @route   POST /api/maintenance
@@ -8,29 +24,29 @@ const createMaintenanceRequest = async (req, res) => {
   try {
     const { category, description, images, entryPermission, propertyId } = req.body;
     
-    // Find active agreements for the tenant
-    const activeAgreements = await Agreement.find({
+    // Find approved bookings for the tenant (allocated to a property)
+    const approvedBookings = await Booking.find({
       tenant: req.user._id,
-      status: "ACTIVE",
+      status: "approved",
     });
 
-    if (activeAgreements.length === 0) {
-      return res.status(400).json({ message: "No active lease agreement found." });
+    if (approvedBookings.length === 0) {
+      return res.status(400).json({ message: "No approved booking found. You must be allocated to a property to submit a maintenance request." });
     }
 
     let selectedPropertyId;
 
-    if (activeAgreements.length === 1) {
-      selectedPropertyId = activeAgreements[0].property;
+    if (approvedBookings.length === 1) {
+      selectedPropertyId = approvedBookings[0].property;
     } else {
       if (!propertyId) {
         return res.status(400).json({ message: "Please select a property for this request." });
       }
-      // Ensure the provided propertyId matches an active agreement
-      const matchingAgreement = activeAgreements.find(
-        (a) => a.property.toString() === propertyId
+      // Ensure the provided propertyId matches an approved booking
+      const matchingBooking = approvedBookings.find(
+        (b) => b.property.toString() === propertyId
       );
-      if (!matchingAgreement) {
+      if (!matchingBooking) {
         return res.status(400).json({ message: "Invalid property selected." });
       }
       selectedPropertyId = propertyId;
@@ -48,8 +64,11 @@ const createMaintenanceRequest = async (req, res) => {
 
     res.status(201).json(newRequest);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not create maintenance request." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not create maintenance request."
+    );
   }
 };
 
@@ -59,13 +78,16 @@ const createMaintenanceRequest = async (req, res) => {
 const getMyMaintenanceRequests = async (req, res) => {
   try {
     const requests = await MaintenanceRequest.find({ tenant: req.user._id })
-      .populate("property", "name address")
+      .populate("property", "title location")
       .sort({ createdAt: -1 });
 
     res.status(200).json(requests);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not fetch requests." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not fetch requests."
+    );
   }
 };
 
@@ -75,14 +97,17 @@ const getMyMaintenanceRequests = async (req, res) => {
 const getAllMaintenanceRequests = async (req, res) => {
   try {
     const requests = await MaintenanceRequest.find({})
-      .populate("property", "name address")
-      .populate("tenant", "firstName lastName email phone")
+      .populate("property", "title location")
+      .populate("tenant", "name email phone")
       .sort({ createdAt: -1 });
 
     res.status(200).json(requests);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not fetch all requests." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not fetch all requests."
+    );
   }
 };
 
@@ -92,8 +117,8 @@ const getAllMaintenanceRequests = async (req, res) => {
 const getMaintenanceRequestById = async (req, res) => {
   try {
     const request = await MaintenanceRequest.findById(req.params.id)
-      .populate("property", "name address")
-      .populate("tenant", "firstName lastName email phone");
+      .populate("property", "title location")
+      .populate("tenant", "name email phone");
 
     if (!request) {
       return res.status(404).json({ message: "Maintenance request not found." });
@@ -109,8 +134,11 @@ const getMaintenanceRequestById = async (req, res) => {
 
     res.status(200).json(request);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not fetch request details." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not fetch request details."
+    );
   }
 };
 
@@ -159,8 +187,11 @@ const updateMaintenanceRequest = async (req, res) => {
     const updatedRequest = await request.save();
     res.status(200).json(updatedRequest);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not update request." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not update request."
+    );
   }
 };
 
@@ -190,8 +221,11 @@ const deleteMaintenanceRequest = async (req, res) => {
     await MaintenanceRequest.findByIdAndDelete(req.params.id);
     res.status(200).json({ message: "Maintenance request deleted." });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server Error: Could not delete request." });
+    return handleMaintenanceError(
+      res,
+      error,
+      "Server Error: Could not delete request."
+    );
   }
 };
 

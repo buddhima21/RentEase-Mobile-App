@@ -9,16 +9,18 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import Colors from '../../constants/Colors';
-import { getMyAgreements } from '../../services/agreementService';
+import { getMyBookings } from '../../services/bookingService';
 import { createMaintenanceRequest } from '../../services/maintenanceService';
 
 const CATEGORIES = ["Plumbing", "Electrical", "Appliance", "General"];
 
 export default function CreateRequestScreen({ navigation }) {
-  const [agreements, setAgreements] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
@@ -27,32 +29,54 @@ export default function CreateRequestScreen({ navigation }) {
   const [category, setCategory] = useState(CATEGORIES[3]);
   const [description, setDescription] = useState('');
   const [entryPermission, setEntryPermission] = useState('CONTACT_TO_SCHEDULE');
-  // Mock image for now
   const [images, setImages] = useState([]);
 
+  const pickImage = async () => {
+    if (images.length >= 3) {
+      return Alert.alert('Limit Reached', 'You can upload a maximum of 3 images.');
+    }
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      return Alert.alert('Permission Required', 'Please allow access to your photo library.');
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsMultipleSelection: true,
+      quality: 0.7,
+      base64: true,
+      selectionLimit: 3 - images.length,
+    });
+    if (!result.canceled && result.assets) {
+      const newImages = result.assets.map(asset => 
+        asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri
+      );
+      setImages(prev => [...prev, ...newImages].slice(0, 3));
+    }
+  };
+
+  const removeImage = (index) => setImages(prev => prev.filter((_, i) => i !== index));
+
   useEffect(() => {
-    async function fetchLeases() {
+    async function fetchBookings() {
       try {
-        const data = await getMyAgreements();
-        const active = data.filter(a => a.status === 'ACTIVE');
-        setAgreements(active);
-        if (active.length === 1) {
-          setSelectedPropertyId(active[0].property._id || active[0].property);
-        } else if (active.length > 1) {
-          setSelectedPropertyId(active[0].property._id || active[0].property);
+        const data = await getMyBookings();
+        const approved = data.filter(b => b.status === 'approved');
+        setBookings(approved);
+        if (approved.length >= 1) {
+          setSelectedPropertyId(approved[0].property._id || approved[0].property);
         }
       } catch (err) {
-        Alert.alert('Error', 'Could not load active agreements.');
+        Alert.alert('Error', 'Could not load your bookings.');
       } finally {
         setLoading(false);
       }
     }
-    fetchLeases();
+    fetchBookings();
   }, []);
 
   const handleSubmit = async () => {
-    if (agreements.length === 0) {
-      Alert.alert('Error', 'You have no active leases to report maintenance for.');
+    if (bookings.length === 0) {
+      Alert.alert('Error', 'You have no approved bookings to report maintenance for.');
       return;
     }
     if (!description.trim()) {
@@ -111,28 +135,28 @@ export default function CreateRequestScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {agreements.length === 0 ? (
+        {bookings.length === 0 ? (
           <View style={styles.noLeaseBox}>
             <MaterialIcons name="error-outline" size={32} color={Colors.error} />
-            <Text style={styles.noLeaseText}>You don't have any active lease agreements.</Text>
+            <Text style={styles.noLeaseText}>You don't have any approved bookings.</Text>
           </View>
         ) : (
           <>
-            {agreements.length > 1 && (
+            {bookings.length > 1 && (
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Select Property</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row' }}>
-                  {agreements.map((agr) => {
-                    const pId = agr.property._id || agr.property;
+                  {bookings.map((bk) => {
+                    const pId = bk.property._id || bk.property;
                     const isActive = selectedPropertyId === pId;
                     return (
                       <TouchableOpacity 
-                        key={agr._id} 
+                        key={bk._id} 
                         style={[styles.chip, isActive && styles.chipActive]}
                         onPress={() => setSelectedPropertyId(pId)}
                       >
                         <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
-                          {agr.property.title || 'Property'}
+                          {bk.property.title || 'Property'}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -167,6 +191,28 @@ export default function CreateRequestScreen({ navigation }) {
                 onChangeText={setDescription}
                 textAlignVertical="top"
               />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Photos (Optional)</Text>
+              {images.length > 0 && (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.mediaPreviewList}>
+                  {images.map((img, idx) => (
+                    <View key={idx} style={styles.mediaPreviewContainer}>
+                      <Image source={{ uri: img }} style={styles.mediaPreview} />
+                      <TouchableOpacity style={styles.mediaRemoveBtn} onPress={() => removeImage(idx)}>
+                        <MaterialIcons name="close" size={14} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+              {images.length < 3 && (
+                <TouchableOpacity style={styles.uploadBtn} onPress={pickImage}>
+                  <MaterialIcons name="add-a-photo" size={20} color={Colors.secondary} />
+                  <Text style={styles.uploadBtnText}>Add Photo</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.formGroup}>
@@ -257,4 +303,11 @@ const styles = StyleSheet.create({
   },
   submitBtnDisabled: { opacity: 0.7 },
   submitBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+
+  uploadBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, backgroundColor: 'rgba(0,101,145,0.06)', borderRadius: 12, alignSelf: 'flex-start' },
+  uploadBtnText: { fontSize: 14, fontWeight: '700', color: Colors.secondary },
+  mediaPreviewList: { flexDirection: 'row', marginBottom: 12 },
+  mediaPreviewContainer: { marginRight: 12, position: 'relative' },
+  mediaPreview: { width: 80, height: 80, borderRadius: 12 },
+  mediaRemoveBtn: { position: 'absolute', top: -6, right: -6, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.6)', alignItems: 'center', justifyContent: 'center' },
 });
