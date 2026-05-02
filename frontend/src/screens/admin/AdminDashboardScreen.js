@@ -5,6 +5,8 @@ import AdminHeader from './components/AdminHeader';
 import AdminStatsGrid from './components/AdminStatsGrid';
 import AdminModerationList from './components/AdminModerationList';
 import BottomNav from '../../components/navigation/BottomNav';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import { getAllPropertiesForAdmin, updatePropertyStatus, formatProperty } from '../../services/propertyService';
 
 export default function AdminDashboardScreen({ navigation }) {
@@ -104,6 +106,7 @@ export default function AdminDashboardScreen({ navigation }) {
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={() => fetchProperties(true)} />
         }
@@ -111,6 +114,30 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={styles.sectionHeader}>
           <Text style={styles.title}>Admin Dashboard</Text>
           <Text style={styles.subtitle}>Manage platform activity and approve new property listings.</Text>
+          
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Analytics', { view: 'stats' })} 
+              style={styles.quickActionBtn}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={['#006591', '#00486b']} style={styles.quickActionGradient}>
+                <MaterialIcons name="insights" size={18} color="#fff" />
+                <Text style={styles.quickActionText}>System Analytics</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Analytics', { view: 'reviews' })} 
+              style={styles.quickActionBtn}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={['#00897b', '#00695c']} style={styles.quickActionGradient}>
+                <MaterialIcons name="rate-review" size={18} color="#fff" />
+                <Text style={styles.quickActionText}>Manage Reviews</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <AdminStatsGrid 
@@ -184,7 +211,11 @@ const styles = StyleSheet.create({
     fontSize: 32, fontWeight: '800', color: '#091426', letterSpacing: -0.5, marginBottom: 8,
     ...(Platform.OS === 'web' && { fontSize: 36 }),
   },
-  subtitle: { fontSize: 18, color: '#45474c' },
+  subtitle: { fontSize: 16, color: '#475569', lineHeight: 24, marginBottom: 20 },
+  quickActionsRow: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  quickActionBtn: { flex: 1, height: 48, borderRadius: 14, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  quickActionGradient: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  quickActionText: { color: '#fff', fontWeight: '800', fontSize: 13 },
   bottomNavContainer: { position: 'absolute', bottom: 0, width: '100%' },
 
   // Modal Styles

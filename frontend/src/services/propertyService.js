@@ -9,7 +9,16 @@ export const getApprovedProperties = async () => {
 };
 
 /**
+ * Fetch a single property by ID
+ */
+export const getPropertyById = async (id) => {
+  const response = await API.get(`/properties/${id}`);
+  return response.data;
+};
+
+/**
  * Fetch the logged-in owner's properties
+
  * Requires auth token (owner role)
  */
 export const getMyProperties = async () => {
@@ -93,5 +102,6 @@ export const formatProperty = (p) => ({
   termsAndConditions: p.termsAndConditions,
   owner: p.owner,
   status: p.status,
+  rejectionReason: p.rejectionReason || null,
   createdAt: p.createdAt,
 });

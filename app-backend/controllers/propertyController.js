@@ -1,14 +1,15 @@
 const Property = require("../models/Property");
+const { createNotification } = require("./notificationController");
 
 // @desc    Get all approved properties
 // @route   GET /api/properties
 // @access  Public
 const getApprovedProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ status: "approved" }).populate(
-      "owner",
-      "name email phone"
-    );
+    const properties = await Property.find(
+      { status: "approved" },
+      { images: { $slice: 1 } }
+    ).populate("owner", "name email phone");
     res.status(200).json(properties);
   } catch (error) {
     console.error("Error fetching approved properties:", error);
@@ -21,7 +22,10 @@ const getApprovedProperties = async (req, res) => {
 // @access  Private (Owner)
 const getMyProperties = async (req, res) => {
   try {
-    const properties = await Property.find({ owner: req.user.id });
+    const properties = await Property.find(
+      { owner: req.user.id },
+      { images: { $slice: 1 } }
+    );
     res.status(200).json(properties);
   } catch (error) {
     console.error("Error fetching owner properties:", error);
@@ -64,6 +68,16 @@ const createProperty = async (req, res) => {
     });
 
     res.status(201).json(property);
+
+    // Notify the owner that the property is now under review
+    await createNotification({
+      recipient: req.user.id,
+      type: "property_submitted",
+      title: "Property Submitted for Review",
+      body: `Your property "${property.title}" has been submitted and is awaiting admin approval.`,
+      refId: property._id.toString(),
+      refModel: "Property",
+    });
   } catch (error) {
     console.error("Error creating property:", error);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -145,7 +159,8 @@ const deleteProperty = async (req, res) => {
 // @access  Private (Admin)
 const getAllProperties = async (req, res) => {
   try {
-    const properties = await Property.find().populate("owner", "name email phone");
+    const properties = await Property.find({}, { images: { $slice: 1 } })
+      .populate("owner", "name email phone");
     res.status(200).json(properties);
   } catch (error) {
     console.error("Error fetching all properties for admin:", error);
@@ -183,9 +198,51 @@ const updatePropertyStatus = async (req, res) => {
 
     await property.save();
 
+    // Send notification to the owner
+    if (status === "approved") {
+      await createNotification({
+        recipient: property.owner,
+        type: "property_approved",
+        title: "Property Approved ✅",
+        body: `Great news! Your property "${property.title}" has been approved and is now live on RentEase.`,
+        refId: property._id.toString(),
+        refModel: "Property",
+      });
+    } else if (status === "rejected") {
+      await createNotification({
+        recipient: property.owner,
+        type: "property_rejected",
+        title: "Property Rejected ❌",
+        body: `Your property "${property.title}" was rejected. Reason: ${property.rejectionReason}`,
+        refId: property._id.toString(),
+        refModel: "Property",
+      });
+    }
+
     res.status(200).json(property);
   } catch (error) {
     console.error("Error updating property status:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Get property by ID
+// @route   GET /api/properties/:id
+// @access  Public
+const getPropertyById = async (req, res) => {
+  try {
+    const property = await Property.findById(req.params.id).populate(
+      "owner",
+      "name email phone"
+    );
+
+    if (!property) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    res.status(200).json(property);
+  } catch (error) {
+    console.error("Error fetching property by ID:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -198,4 +255,5 @@ module.exports = {
   deleteProperty,
   getAllProperties,
   updatePropertyStatus,
+  getPropertyById,
 };
