@@ -8,6 +8,7 @@ const {
   deleteProperty,
   getAllProperties,
   updatePropertyStatus,
+  getPropertyById,
 } = require("../controllers/propertyController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
@@ -31,5 +32,8 @@ router.get("/admin/all", protect, authorizeRoles("admin"), getAllProperties);
 
 // Admin can approve or reject properties
 router.put("/admin/:id/status", protect, authorizeRoles("admin"), updatePropertyStatus);
+
+// Get single property by ID (Public)
+router.get("/:id", getPropertyById);
 
 module.exports = router;

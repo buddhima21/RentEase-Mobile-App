@@ -24,6 +24,7 @@ import Colors from '../../constants/Colors';
 import DetailHeader from '../../components/navigation/DetailHeader';
 import AmenityItem from '../../components/ui/AmenityItem';
 import { useAuth } from '../../context/AuthContext';
+import { useFavorites } from '../../context/FavoritesContext';
 import { createBooking, getPropertyAvailability } from '../../services/bookingService';
 import { getPropertyById } from '../../services/propertyService';
 import API from '../../services/api';
@@ -173,6 +174,7 @@ function ReviewCard({ review, currentUserId, onDelete }) {
 
 export default function PropertyDetailsScreen({ navigation, route }) {
   const { user } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
   const [activeSlide, setActiveSlide] = useState(0);
   const scrollRef = useRef(null);
 
@@ -745,6 +747,8 @@ export default function PropertyDetailsScreen({ navigation, route }) {
       <DetailHeader
         onBack={() => navigation.goBack()}
         onShare={() => {}}
+        isFavorited={isFavorited(property.id)}
+        onFavorite={() => toggleFavorite(property.id)}
       />
 
       {/* ── Availability Badge ── */}
@@ -790,7 +794,7 @@ export default function PropertyDetailsScreen({ navigation, route }) {
               style={styles.bookGradient}
             >
               <MaterialIcons name={availability?.isFullyBooked ? 'block' : 'calendar-today'} size={18} color="#fff" />
-              <Text style={styles.bookText}>{availability?.isFullyBooked ? 'Fully Booked' : 'Book Tour'}</Text>
+              <Text style={styles.bookText}>{availability?.isFullyBooked ? 'Fully Booked' : 'Book'}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
