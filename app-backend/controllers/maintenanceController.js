@@ -1,5 +1,5 @@
 const MaintenanceRequest = require("../models/MaintenanceRequest");
-const Agreement = require("../models/Agreement");
+const Booking = require("../models/Booking");
 
 const isInvalidObjectIdError = (error) =>
   error?.name === "CastError" && error?.kind === "ObjectId";
@@ -24,29 +24,29 @@ const createMaintenanceRequest = async (req, res) => {
   try {
     const { category, description, images, entryPermission, propertyId } = req.body;
     
-    // Find active agreements for the tenant
-    const activeAgreements = await Agreement.find({
+    // Find approved bookings for the tenant (allocated to a property)
+    const approvedBookings = await Booking.find({
       tenant: req.user._id,
-      status: "ACTIVE",
+      status: "approved",
     });
 
-    if (activeAgreements.length === 0) {
-      return res.status(400).json({ message: "No active lease agreement found." });
+    if (approvedBookings.length === 0) {
+      return res.status(400).json({ message: "No approved booking found. You must be allocated to a property to submit a maintenance request." });
     }
 
     let selectedPropertyId;
 
-    if (activeAgreements.length === 1) {
-      selectedPropertyId = activeAgreements[0].property;
+    if (approvedBookings.length === 1) {
+      selectedPropertyId = approvedBookings[0].property;
     } else {
       if (!propertyId) {
         return res.status(400).json({ message: "Please select a property for this request." });
       }
-      // Ensure the provided propertyId matches an active agreement
-      const matchingAgreement = activeAgreements.find(
-        (a) => a.property.toString() === propertyId
+      // Ensure the provided propertyId matches an approved booking
+      const matchingBooking = approvedBookings.find(
+        (b) => b.property.toString() === propertyId
       );
-      if (!matchingAgreement) {
+      if (!matchingBooking) {
         return res.status(400).json({ message: "Invalid property selected." });
       }
       selectedPropertyId = propertyId;
