@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -150,6 +151,18 @@ export default function RequestDetailScreen({ route, navigation }) {
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.descriptionText}>{request.description}</Text>
 
+          {request.images && request.images.length > 0 && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.sectionTitle}>Attached Photos</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+                {request.images.map((img, idx) => (
+                  <Image key={idx} source={{ uri: img }} style={styles.attachedImage} />
+                ))}
+              </ScrollView>
+            </>
+          )}
+
           <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Entry Permission</Text>
@@ -240,4 +253,7 @@ const styles = StyleSheet.create({
   
   revertBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: Colors.surfaceContainerLow, paddingVertical: 16, borderRadius: 12, borderWidth: 1, borderColor: 'transparent' },
   revertBtnText: { color: Colors.secondary, fontSize: 16, fontWeight: '700' },
+
+  imageScroll: { flexDirection: 'row', marginTop: 8 },
+  attachedImage: { width: 100, height: 100, borderRadius: 12, marginRight: 12, backgroundColor: Colors.surfaceContainerLow },
 });

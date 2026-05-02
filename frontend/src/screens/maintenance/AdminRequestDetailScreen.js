@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   TextInput,
+  Image,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -132,6 +133,18 @@ export default function AdminRequestDetailScreen({ route, navigation }) {
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.descriptionText}>{request.description}</Text>
 
+          {request.images && request.images.length > 0 && (
+            <>
+              <View style={styles.divider} />
+              <Text style={styles.sectionTitle}>Attached Photos</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.imageScroll}>
+                {request.images.map((img, idx) => (
+                  <Image key={idx} source={{ uri: img }} style={styles.attachedImage} />
+                ))}
+              </ScrollView>
+            </>
+          )}
+
           <View style={styles.divider} />
 
           <Text style={styles.sectionTitle}>Entry Permission</Text>
@@ -248,4 +261,7 @@ const styles = StyleSheet.create({
 
   closedBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#f1f5f9', padding: 12, borderRadius: 8, marginBottom: 20 },
   closedBannerText: { flex: 1, color: '#475569', fontSize: 13, fontWeight: '500' },
+
+  imageScroll: { flexDirection: 'row', marginTop: 8 },
+  attachedImage: { width: 100, height: 100, borderRadius: 12, marginRight: 12, backgroundColor: Colors.surfaceContainerLow },
 });
