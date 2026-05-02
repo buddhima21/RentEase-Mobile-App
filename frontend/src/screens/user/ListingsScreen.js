@@ -20,6 +20,8 @@ import Colors from '../../constants/Colors';
 import BottomNav from '../../components/navigation/BottomNav';
 import ListingRow from '../../components/cards/ListingRow';
 import { getApprovedProperties, formatProperty } from '../../services/propertyService';
+import { useFavorites } from '../../context/FavoritesContext';
+import { useAuth } from '../../context/AuthContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -64,8 +66,11 @@ function SkeletonBox({ width, height, style }) {
 
 // ── Property Card (matches app style) ──
 function PropertyCard({ item, onPress }) {
-  const [liked, setLiked] = useState(false);
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const { user } = useAuth();
+  const fav = isFavorited(item.id);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+  const heartScale = useRef(new Animated.Value(1)).current;
   const typeColor = getTypeColor(item.propertyType);
 
   const handlePressIn = () => {
@@ -73,6 +78,15 @@ function PropertyCard({ item, onPress }) {
   };
   const handlePressOut = () => {
     Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 20 }).start();
+  };
+
+  const handleHeartPress = async () => {
+    // Animate heart
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true, speed: 40, bounciness: 18 }),
+      Animated.spring(heartScale, { toValue: 1, useNativeDriver: true, speed: 20 }),
+    ]).start();
+    await toggleFavorite(item.id);
   };
 
   return (
@@ -110,15 +124,18 @@ function PropertyCard({ item, onPress }) {
           <View style={styles.propTopRow}>
             <Text style={styles.propTitle} numberOfLines={1}>{item.title}</Text>
             <TouchableOpacity
-              onPress={() => setLiked(!liked)}
+              onPress={handleHeartPress}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={styles.heartBtn}
+              activeOpacity={0.7}
             >
-              <MaterialIcons
-                name={liked ? 'favorite' : 'favorite-border'}
-                size={20}
-                color={liked ? Colors.error : Colors.outlineVariant}
-              />
+              <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+                <MaterialIcons
+                  name={fav ? 'favorite' : 'favorite-border'}
+                  size={22}
+                  color={fav ? '#ef4444' : Colors.outlineVariant}
+                />
+              </Animated.View>
             </TouchableOpacity>
           </View>
 
@@ -258,6 +275,7 @@ export default function ListingsScreen({ navigation }) {
   const handleTabPress = (tabKey) => {
     if (tabKey === 'home') navigation.navigate('Home');
     if (tabKey === 'inbox') navigation.navigate('Inbox');
+    if (tabKey === 'saved') navigation.navigate('Saved');
   };
 
   const currentSortLabel = SORT_OPTIONS.find(o => o.id === sortBy)?.label || 'Sort';

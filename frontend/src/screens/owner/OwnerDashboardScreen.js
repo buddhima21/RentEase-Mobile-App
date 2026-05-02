@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 12 },
   locationText: { fontSize: 12, color: Colors.onSurfaceVariant },
   actionBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
-  fab: { position: 'absolute', bottom: 80, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
+  fab: { position: 'absolute', bottom: 130, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
   fabGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   // Rejection reason banner (shown on owner's rejected properties)

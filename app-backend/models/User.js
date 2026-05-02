@@ -30,6 +30,12 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please add a phone number"],
     },
+    favorites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Property",
+      },
+    ],
   },
   {
     timestamps: true,

@@ -36,6 +36,7 @@ app.use("/api/bank-cards",     require("./routes/bankCardRoutes"));
 app.use("/api/payments",       require("./routes/paymentRoutes"));
 app.use("/api/notifications",  require("./routes/notificationRoutes"));
 app.use("/api/maintenance",    require("./routes/maintenanceRoutes"));
+app.use("/api/favorites",      require("./routes/favoriteRoutes"));
 
 // Test route
 app.get("/", (req, res) => {
