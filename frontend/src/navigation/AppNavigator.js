@@ -13,6 +13,7 @@ import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import ReviewScreen from '../screens/user/ReviewScreen';
 import AnalyticsScreen from '../screens/shared/AnalyticsScreen';
 import InboxScreen from '../screens/user/InboxScreen';
+import OwnerFinanceScreen from '../screens/owner/OwnerFinanceScreen';
 // ── Agreement screens (new) ──────────────────────────────────────────────────
 import AgreementsScreen from '../screens/agreements/AgreementsScreen';
 import AgreementDetailsScreen from '../screens/agreements/AgreementDetailsScreen';
@@ -47,6 +48,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Signup" component={SignupScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="OwnerDashboard" component={OwnerDashboardScreen} />
       <Stack.Screen name="ManageProperty" component={ManagePropertyScreen} />
+      <Stack.Screen name="OwnerFinance" component={OwnerFinanceScreen} />
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
 
