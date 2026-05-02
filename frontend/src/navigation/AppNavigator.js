@@ -17,6 +17,13 @@ import InboxScreen from '../screens/user/InboxScreen';
 import AgreementsScreen from '../screens/agreements/AgreementsScreen';
 import AgreementDetailsScreen from '../screens/agreements/AgreementDetailsScreen';
 
+// ── Maintenance screens ──
+import MaintenanceHubScreen from '../screens/maintenance/MaintenanceHubScreen';
+import CreateRequestScreen from '../screens/maintenance/CreateRequestScreen';
+import RequestDetailScreen from '../screens/maintenance/RequestDetailScreen';
+import AdminMaintenanceHubScreen from '../screens/maintenance/AdminMaintenanceHubScreen';
+import AdminRequestDetailScreen from '../screens/maintenance/AdminRequestDetailScreen';
+
 // ── Rent Payment & Tracking screens ──
 import TenantBillsScreen from '../screens/user/TenantBillsScreen';
 import RentPaymentScreen from '../screens/user/RentPaymentScreen';
@@ -26,6 +33,7 @@ import TenantWalletScreen from '../screens/user/TenantWalletScreen';
 import TenantBookingDashboard from '../screens/user/TenantBookingDashboard';
 import OwnerBookingRequestsScreen from '../screens/owner/OwnerBookingRequestsScreen';
 import OwnerAllocationHistoryScreen from '../screens/owner/OwnerAllocationHistoryScreen';
+import SavedScreen from '../screens/user/SavedScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -55,10 +63,18 @@ export default function AppNavigator() {
       <Stack.Screen name="Reviews" component={ReviewScreen} />
       <Stack.Screen name="Analytics" component={AnalyticsScreen} />
       <Stack.Screen name="Inbox" component={InboxScreen} />
+      <Stack.Screen name="Saved" component={SavedScreen} />
       
       {/* Agreement & Contract Management */}
       <Stack.Screen name="Agreements" component={AgreementsScreen} />
       <Stack.Screen name="AgreementDetails" component={AgreementDetailsScreen} />
+
+      {/* Maintenance */}
+      <Stack.Screen name="MaintenanceHub" component={MaintenanceHubScreen} />
+      <Stack.Screen name="CreateRequest" component={CreateRequestScreen} />
+      <Stack.Screen name="RequestDetail" component={RequestDetailScreen} />
+      <Stack.Screen name="AdminMaintenanceHub" component={AdminMaintenanceHubScreen} />
+      <Stack.Screen name="AdminRequestDetail" component={AdminRequestDetailScreen} />
     </Stack.Navigator>
   );
 }

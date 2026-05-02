@@ -111,14 +111,20 @@ export default function HomeScreen({ navigation }) {
     ? allProperties
     : allProperties.filter(p => p.propertyType?.toLowerCase() === activeCategory.toLowerCase());
 
-  // First half = featured (newest), rest = recent
-  const sorted = [...filtered].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  const featured = sorted.slice(0, 5);
-  const recent   = sorted.slice(5, 11);
+  // Recent: Latest 3 published properties
+  const recent = [...filtered]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 3);
+
+  // Featured: Premium properties (sort by price highest to lowest)
+  const featured = [...filtered]
+    .sort((a, b) => (b.priceRaw || 0) - (a.priceRaw || 0))
+    .slice(0, 5);
 
   const handleTabPress = (tabKey) => {
     setActiveTab(tabKey);
     if (tabKey === 'listings') navigation.navigate('Listings');
+    else if (tabKey === 'saved') navigation.navigate('Saved');
     else if (tabKey === 'login') navigation.navigate('Login');
     else if (tabKey === 'profile') setShowProfileMenu(true);
     else if (tabKey === 'inbox') navigation.navigate('Inbox');
@@ -355,6 +361,17 @@ export default function HomeScreen({ navigation }) {
                 >
                   <MaterialIcons name="description" size={20} color={Colors.onSurfaceVariant} />
                   <Text style={styles.dropdownItemText}>My Agreements</Text>
+                </TouchableOpacity>
+              )}
+              {/* ── Tenant: Maintenance ── */}
+              {user?.role === 'tenant' && (
+                <TouchableOpacity
+                  style={styles.dropdownItem}
+                  activeOpacity={0.7}
+                  onPress={() => { setShowProfileMenu(false); navigation.navigate('MaintenanceHub'); }}
+                >
+                  <MaterialIcons name="build" size={20} color={Colors.onSurfaceVariant} />
+                  <Text style={styles.dropdownItemText}>Maintenance Requests</Text>
                 </TouchableOpacity>
               )}
               <View style={styles.dropdownDivider} />

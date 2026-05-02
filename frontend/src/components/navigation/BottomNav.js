@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../context/AuthContext';
+import { useFavorites } from '../../context/FavoritesContext';
 import { getUnreadCount } from '../../services/notificationService';
 import { useFocusEffect } from '@react-navigation/native';
 
@@ -29,6 +30,8 @@ const TABS_ADMIN = [
 export default function BottomNav({ activeTab = 'home', onTabPress }) {
   const { user } = useAuth();
   const [unreadCount, setUnreadCount] = React.useState(0);
+  const { favoriteIds } = useFavorites();
+  const savedCount = favoriteIds?.size || 0;
 
   // Fetch unread count whenever this component's screen comes into focus
   useFocusEffect(
@@ -56,6 +59,9 @@ export default function BottomNav({ activeTab = 'home', onTabPress }) {
     <View style={styles.nav}>
       {tabs.map((tab) => {
         const isActive = tab.key === activeTab;
+        const isSavedTab = tab.key === 'saved';
+        const iconName = isSavedTab && isActive ? 'favorite' : tab.icon;
+        const iconColor = isSavedTab && isActive ? '#ef4444' : isActive ? '#155e75' : '#94a3b8';
         return (
           <TouchableOpacity
             key={tab.key}
@@ -65,17 +71,22 @@ export default function BottomNav({ activeTab = 'home', onTabPress }) {
           >
             <View>
               <MaterialIcons
-                name={isActive && tab.key === 'home' ? 'home' : tab.icon}
+                name={iconName}
                 size={24}
-                color={isActive ? '#155e75' : '#94a3b8'}
+                color={iconColor}
               />
               {tab.key === 'inbox' && unreadCount > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
                 </View>
               )}
+              {tab.key === 'saved' && savedCount > 0 && (
+                <View style={[styles.badge, { backgroundColor: '#ef4444' }]}>
+                  <Text style={styles.badgeText}>{savedCount > 9 ? '9+' : savedCount}</Text>
+                </View>
+              )}
             </View>
-            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+            <Text style={[styles.tabLabel, isActive && styles.tabLabelActive, isSavedTab && isActive && { color: '#ef4444' }]}>
               {tab.label}
             </Text>
           </TouchableOpacity>

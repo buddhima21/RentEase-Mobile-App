@@ -1,10 +1,25 @@
-import React, { useState } from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef } from 'react';
+import { View, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 
-export default function DetailHeader({ onBack, onShare }) {
-  const [liked, setLiked] = useState(false);
+/**
+ * DetailHeader
+ * @param {Function} onBack
+ * @param {Function} onShare
+ * @param {boolean}  isFavorited - controlled favorite state
+ * @param {Function} onFavorite  - called when heart is pressed
+ */
+export default function DetailHeader({ onBack, onShare, isFavorited = false, onFavorite }) {
+  const heartScale = useRef(new Animated.Value(1)).current;
+
+  const handleHeartPress = () => {
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.4, useNativeDriver: true, speed: 40, bounciness: 20 }),
+      Animated.spring(heartScale, { toValue: 1,   useNativeDriver: true, speed: 20 }),
+    ]).start();
+    onFavorite && onFavorite();
+  };
 
   return (
     <View style={styles.header}>
@@ -15,12 +30,14 @@ export default function DetailHeader({ onBack, onShare }) {
         <TouchableOpacity style={styles.iconBtn} onPress={onShare} activeOpacity={0.7}>
           <MaterialIcons name="share" size={22} color={Colors.primary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => setLiked(!liked)} activeOpacity={0.7}>
-          <MaterialIcons
-            name={liked ? 'favorite' : 'favorite-border'}
-            size={22}
-            color={liked ? '#e53e3e' : Colors.primary}
-          />
+        <TouchableOpacity style={styles.iconBtn} onPress={handleHeartPress} activeOpacity={0.7}>
+          <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+            <MaterialIcons
+              name={isFavorited ? 'favorite' : 'favorite-border'}
+              size={22}
+              color={isFavorited ? '#ef4444' : Colors.primary}
+            />
+          </Animated.View>
         </TouchableOpacity>
       </View>
     </View>

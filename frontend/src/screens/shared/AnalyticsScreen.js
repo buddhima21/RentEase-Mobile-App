@@ -113,6 +113,7 @@ export default function AnalyticsScreen({ navigation, route }) {
   const [showTimeframeModal, setShowTimeframeModal] = useState(false);
   const [replyText, setReplyText] = useState({});
   const [replyingTo, setReplyingTo] = useState(null);
+  const [activeReviewTab, setActiveReviewTab] = useState('pending'); // 'pending' or 'accepted'
 
   const fetchAnalytics = useCallback(async (isRefresh = false) => {
     try {
@@ -225,8 +226,15 @@ export default function AnalyticsScreen({ navigation, route }) {
           <MaterialIcons name="arrow-back-ios" size={18} color="#0f172a" />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerMainTitle}>System <Text style={{ color: Colors.secondary }}>Analytics</Text></Text>
-          <Text style={styles.headerSubtitle}>Platform performance and growth.</Text>
+          <Text style={styles.headerMainTitle}>
+            {currentView === 'reviews' ? 'Review ' : 'Performance '}
+            <Text style={{ color: Colors.secondary }}>
+              {currentView === 'reviews' ? 'Moderation' : 'Insights'}
+            </Text>
+          </Text>
+          <Text style={styles.headerSubtitle}>
+            {currentView === 'reviews' ? 'Manage and respond to tenant feedback.' : 'Monitor platform performance and metrics.'}
+          </Text>
         </View>
       </View>
 
@@ -242,11 +250,14 @@ export default function AnalyticsScreen({ navigation, route }) {
             </Text>
             <MaterialIcons name="keyboard-arrow-down" size={18} color="#475569" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.exportBtn} onPress={generatePDF}>
-            <LinearGradient colors={[Colors.secondary, '#00486b']} style={styles.exportGradient}>
-              <Text style={styles.exportLabel}>Export Report</Text>
-            </LinearGradient>
-          </TouchableOpacity>
+          
+          {currentView !== 'reviews' && (
+            <TouchableOpacity style={styles.exportBtn} onPress={generatePDF}>
+              <LinearGradient colors={[Colors.secondary, '#00486b']} style={styles.exportGradient}>
+                <Text style={styles.exportLabel}>Export Report</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
         </View>
 
         {(currentView === 'all' || currentView === 'stats') && (
@@ -272,85 +283,122 @@ export default function AnalyticsScreen({ navigation, route }) {
 
         {(currentView === 'all' || currentView === 'reviews') && (
           <View style={styles.activitySection}>
-            <Text style={styles.sectionTitle}>{isAdmin ? 'Recent Moderation' : 'Manage Reviews'}</Text>
-            {data?.reviews?.map((review) => (
-              <View key={review._id} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.reviewerName}>{review.user?.name}</Text>
-                    <Text style={styles.propertyTitle}>{review.property?.title}</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <View style={styles.ratingBox}>
-                      <MaterialIcons name="star" size={14} color="#f59e0b" />
-                      <Text style={styles.ratingText}>{review.rating}</Text>
-                    </View>
-                    {!isAdmin && (
-                      <TouchableOpacity onPress={() => handleDeleteReview(review._id)}>
-                        <MaterialIcons name="delete-outline" size={20} color={Colors.error} />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-                
-                <Text style={styles.reviewComment}>{review.comment}</Text>
-                
-                {review.status === 'pending' && !isAdmin && (
-                  <View style={styles.moderationBtns}>
-                    <TouchableOpacity 
-                      style={[styles.modBtn, { backgroundColor: Colors.secondary }]} 
-                      onPress={() => handleModerate(review._id, 'accepted')}
-                    >
-                      <Text style={styles.modBtnText}>Accept</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.modBtn, { backgroundColor: Colors.error }]} 
-                      onPress={() => handleModerate(review._id, 'rejected')}
-                    >
-                      <Text style={styles.modBtnText}>Reject</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+            <View style={styles.reviewHeaderRow}>
+              <Text style={styles.sectionTitle}>{isAdmin ? 'Recent Moderation' : 'Manage Reviews'}</Text>
+              {isAdmin && (
+                <View style={styles.adminBadge}><Text style={styles.adminBadgeText}>ADMIN</Text></View>
+              )}
+            </View>
 
-                {review.status === 'accepted' && !isAdmin && (
-                  <View style={styles.replySection}>
-                    {review.ownerReply ? (
-                      <View style={styles.ownerReplyBox}>
-                        <Text style={styles.replyLabel}>My Reply:</Text>
-                        <Text style={styles.replyText}>{review.ownerReply}</Text>
+            {!isAdmin && (
+              <View style={styles.tabContainer}>
+                <TouchableOpacity 
+                  style={[styles.tabButton, activeReviewTab === 'pending' && styles.activeTabButton]}
+                  onPress={() => setActiveReviewTab('pending')}
+                >
+                  <Text style={[styles.tabButtonText, activeReviewTab === 'pending' && styles.activeTabButtonText]}>New Reviews</Text>
+                  <View style={[styles.tabBadge, activeReviewTab === 'pending' ? { backgroundColor: Colors.secondary } : { backgroundColor: '#e2e8f0' }]}>
+                    <Text style={[styles.tabBadgeText, activeReviewTab === 'pending' ? { color: '#fff' } : { color: '#64748b' }]}>
+                      {stats.pendingReviews || 0}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={[styles.tabButton, activeReviewTab === 'accepted' && styles.activeTabButton]}
+                  onPress={() => setActiveReviewTab('accepted')}
+                >
+                  <Text style={[styles.tabButtonText, activeReviewTab === 'accepted' && styles.activeTabButtonText]}>Accepted</Text>
+                  <View style={[styles.tabBadge, activeReviewTab === 'accepted' ? { backgroundColor: Colors.secondary } : { backgroundColor: '#e2e8f0' }]}>
+                    <Text style={[styles.tabBadgeText, activeReviewTab === 'accepted' ? { color: '#fff' } : { color: '#64748b' }]}>
+                      {stats.acceptedCount || 0}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {(() => {
+              const filtered = data?.reviews?.filter(r => isAdmin ? true : r.status === activeReviewTab) || [];
+              if (filtered.length === 0) {
+                return <Text style={styles.emptyText}>No {activeReviewTab} reviews found.</Text>;
+              }
+              return filtered.map((review) => (
+                <View key={review._id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.reviewerName}>{review.user?.name}</Text>
+                      <Text style={styles.propertyTitle}>{review.property?.title}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      <View style={styles.ratingBox}>
+                        <MaterialIcons name="star" size={14} color="#f59e0b" />
+                        <Text style={styles.ratingText}>{review.rating}</Text>
                       </View>
-                    ) : (
-                      replyingTo === review._id ? (
-                        <View style={styles.replyInputRow}>
-                          <TextInput
-                            style={styles.replyInput}
-                            placeholder="Write a reply..."
-                            value={replyText[review._id] || ''}
-                            onChangeText={(text) => setReplyText(prev => ({ ...prev, [review._id]: text }))}
-                          />
-                          <TouchableOpacity style={styles.sendReplyBtn} onPress={() => handleReplySubmit(review._id)}>
-                            <MaterialIcons name="send" size={20} color={Colors.secondary} />
-                          </TouchableOpacity>
+                      {!isAdmin && (
+                        <TouchableOpacity onPress={() => handleDeleteReview(review._id)}>
+                          <MaterialIcons name="delete-outline" size={20} color={Colors.error} />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                  
+                  <Text style={styles.reviewComment}>{review.comment}</Text>
+                  
+                  {review.status === 'pending' && !isAdmin && (
+                    <View style={styles.moderationBtns}>
+                      <TouchableOpacity 
+                        style={[styles.modBtn, { backgroundColor: Colors.secondary }]} 
+                        onPress={() => handleModerate(review._id, 'accepted')}
+                      >
+                        <Text style={styles.modBtnText}>Accept</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.modBtn, { backgroundColor: Colors.error }]} 
+                        onPress={() => handleModerate(review._id, 'rejected')}
+                      >
+                        <Text style={styles.modBtnText}>Reject</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {review.status === 'accepted' && !isAdmin && (
+                    <View style={styles.replySection}>
+                      {review.ownerReply ? (
+                        <View style={styles.ownerReplyBox}>
+                          <Text style={styles.replyLabel}>My Reply:</Text>
+                          <Text style={styles.replyText}>{review.ownerReply}</Text>
                         </View>
                       ) : (
-                        <TouchableOpacity onPress={() => setReplyingTo(review._id)}>
-                          <Text style={[styles.addReplyText, { color: Colors.secondary }]}>+ Add Reply</Text>
-                        </TouchableOpacity>
-                      )
-                    )}
-                  </View>
-                )}
+                        replyingTo === review._id ? (
+                          <View style={styles.replyInputRow}>
+                            <TextInput
+                              style={styles.replyInput}
+                              placeholder="Write a reply..."
+                              value={replyText[review._id] || ''}
+                              onChangeText={(text) => setReplyText(prev => ({ ...prev, [review._id]: text }))}
+                            />
+                            <TouchableOpacity style={styles.sendReplyBtn} onPress={() => handleReplySubmit(review._id)}>
+                              <MaterialIcons name="send" size={20} color={Colors.secondary} />
+                            </TouchableOpacity>
+                          </View>
+                        ) : (
+                          <TouchableOpacity onPress={() => setReplyingTo(review._id)}>
+                            <Text style={[styles.addReplyText, { color: Colors.secondary }]}>+ Add Reply</Text>
+                          </TouchableOpacity>
+                        )
+                      )}
+                    </View>
+                  )}
 
-                <View style={[styles.statusBadge, { backgroundColor: review.status === 'accepted' ? '#dcfce7' : review.status === 'rejected' ? '#fee2e2' : '#fef3c7' }]}>
-                  <Text style={[styles.statusBadgeText, { color: review.status === 'accepted' ? '#166534' : review.status === 'rejected' ? '#991b1b' : '#92400e' }]}>
-                    {review.status.toUpperCase()}
-                  </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: review.status === 'accepted' ? '#dcfce7' : review.status === 'rejected' ? '#fee2e2' : '#fef3c7' }]}>
+                    <Text style={[styles.statusBadgeText, { color: review.status === 'accepted' ? '#166534' : review.status === 'rejected' ? '#991b1b' : '#92400e' }]}>
+                      {review.status.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))}
-            {(!data?.reviews || data.reviews.length === 0) && (
-              <Text style={styles.emptyText}>No reviews found.</Text>
-            )}
+              ));
+            })()}
           </View>
         )}
       </ScrollView>
@@ -466,5 +514,17 @@ const styles = StyleSheet.create({
   addReplyText: { fontSize: 13, fontWeight: '700', color: '#10b981' },
   replyInputRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   replyInput: { flex: 1, backgroundColor: '#f1f5f9', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, fontSize: 13 },
-  sendReplyBtn: { padding: 8 }
+  sendReplyBtn: { padding: 8 },
+
+  reviewHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+  adminBadge: { backgroundColor: 'rgba(0,101,145,0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  adminBadgeText: { color: Colors.secondary, fontSize: 10, fontWeight: '800' },
+  
+  tabContainer: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  tabButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#fff', paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0' },
+  activeTabButton: { borderColor: Colors.secondary, backgroundColor: 'rgba(0,101,145,0.02)' },
+  tabButtonText: { fontSize: 13, fontWeight: '700', color: '#64748b' },
+  activeTabButtonText: { color: Colors.secondary },
+  tabBadge: { minWidth: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  tabBadgeText: { fontSize: 10, fontWeight: '800' },
 });
