@@ -78,7 +78,7 @@ const createMaintenanceRequest = async (req, res) => {
 const getMyMaintenanceRequests = async (req, res) => {
   try {
     const requests = await MaintenanceRequest.find({ tenant: req.user._id })
-      .populate("property", "name address")
+      .populate("property", "title location")
       .sort({ createdAt: -1 });
 
     res.status(200).json(requests);
@@ -97,8 +97,8 @@ const getMyMaintenanceRequests = async (req, res) => {
 const getAllMaintenanceRequests = async (req, res) => {
   try {
     const requests = await MaintenanceRequest.find({})
-      .populate("property", "name address")
-      .populate("tenant", "firstName lastName email phone")
+      .populate("property", "title location")
+      .populate("tenant", "name email phone")
       .sort({ createdAt: -1 });
 
     res.status(200).json(requests);
@@ -117,8 +117,8 @@ const getAllMaintenanceRequests = async (req, res) => {
 const getMaintenanceRequestById = async (req, res) => {
   try {
     const request = await MaintenanceRequest.findById(req.params.id)
-      .populate("property", "name address")
-      .populate("tenant", "firstName lastName email phone");
+      .populate("property", "title location")
+      .populate("tenant", "name email phone");
 
     if (!request) {
       return res.status(404).json({ message: "Maintenance request not found." });

@@ -132,18 +132,39 @@ export default function RequestDetailScreen({ route, navigation }) {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.card}>
-          <View style={styles.statusRow}>
+          <View style={styles.cardHeader}>
+            <View>
+              <Text style={styles.ticketId}>Ticket #{request._id.slice(-6).toUpperCase()}</Text>
+              <Text style={styles.categoryTitle}>{request.category} Issue</Text>
+            </View>
             <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-              <MaterialIcons name={statusStyle.icon} size={16} color={statusStyle.text} />
+              <MaterialIcons name={statusStyle.icon} size={14} color={statusStyle.text} />
               <Text style={[styles.statusBadgeText, { color: statusStyle.text }]}>{statusStyle.label}</Text>
             </View>
-            <Text style={styles.dateText}>{formatDate(request.createdAt)}</Text>
           </View>
 
-          <Text style={styles.categoryTitle}>{request.category} Issue</Text>
-          <View style={styles.locationRow}>
-            <MaterialIcons name="location-on" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.propertyText}>{request.property?.name || request.property?.address || 'Property'}</Text>
+          <View style={styles.divider} />
+
+          <View style={styles.detailGrid}>
+            <View style={styles.detailItem}>
+              <View style={styles.iconBox}>
+                <MaterialIcons name="location-on" size={18} color={Colors.secondary} />
+              </View>
+              <View style={styles.detailTextWrap}>
+                <Text style={styles.detailLabel}>Property</Text>
+                <Text style={styles.detailText}>{request.property?.title || request.property?.location || 'Property'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailItem}>
+              <View style={styles.iconBox}>
+                <MaterialIcons name="calendar-today" size={18} color={Colors.secondary} />
+              </View>
+              <View style={styles.detailTextWrap}>
+                <Text style={styles.detailLabel}>Submitted</Text>
+                <Text style={styles.detailText}>{formatDate(request.createdAt)}</Text>
+              </View>
+            </View>
           </View>
 
           <View style={styles.divider} />
@@ -227,14 +248,20 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 16, paddingBottom: 100 },
 
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, shadowColor: '#191C1E', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3 },
-  statusRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
+  
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  ticketId: { fontSize: 12, fontWeight: '700', color: Colors.onSurfaceVariant, marginBottom: 4, letterSpacing: 0.5 },
+  categoryTitle: { fontSize: 20, fontWeight: '800', color: Colors.primary },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
   statusBadgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
-  dateText: { fontSize: 12, color: Colors.onSurfaceVariant },
 
-  categoryTitle: { fontSize: 20, fontWeight: '800', color: Colors.primary, marginBottom: 8 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  propertyText: { fontSize: 14, color: Colors.onSurfaceVariant },
+  detailGrid: { gap: 16 },
+  detailItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(0,101,145,0.06)', alignItems: 'center', justifyContent: 'center' },
+  detailTextWrap: { flex: 1, paddingTop: 2 },
+  detailLabel: { fontSize: 11, fontWeight: '700', color: Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  detailText: { fontSize: 15, fontWeight: '600', color: Colors.primary },
+  detailSubText: { fontSize: 13, color: Colors.onSurfaceVariant, marginTop: 2 },
 
   divider: { height: 1, backgroundColor: Colors.surfaceContainerHigh, marginVertical: 16 },
   

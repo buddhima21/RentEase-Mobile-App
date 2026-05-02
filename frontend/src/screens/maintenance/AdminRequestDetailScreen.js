@@ -19,6 +19,17 @@ import {
   updateMaintenanceRequest 
 } from '../../services/maintenanceService';
 
+const getStatusStyle = (status) => {
+  switch (status) {
+    case 'SUBMITTED': return { label: 'Submitted', bg: '#e0f2fe', text: '#0284c7', icon: 'schedule' };
+    case 'ACTION_SCHEDULED': return { label: 'Scheduled', bg: '#fef08a', text: '#854d0e', icon: 'event' };
+    case 'AWAITING_PARTS': return { label: 'Awaiting Parts', bg: '#fed7aa', text: '#c2410c', icon: 'build' };
+    case 'RESOLVED': return { label: 'Resolved', bg: '#dcfce7', text: '#166534', icon: 'check-circle' };
+    case 'CLOSED': return { label: 'Closed', bg: '#f1f5f9', text: '#475569', icon: 'done-all' };
+    default: return { label: status, bg: '#f1f5f9', text: '#475569', icon: 'info' };
+  }
+};
+
 const STATUS_OPTIONS = [
   { value: 'SUBMITTED', label: 'Submitted' },
   { value: 'ACTION_SCHEDULED', label: 'Action Scheduled' },
@@ -98,6 +109,7 @@ export default function AdminRequestDetailScreen({ route, navigation }) {
   }
 
   const isClosed = request.status === 'CLOSED';
+  const statusStyle = getStatusStyle(request.status);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -114,18 +126,51 @@ export default function AdminRequestDetailScreen({ route, navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Ticket Details */}
         <View style={styles.card}>
-          <Text style={styles.categoryTitle}>{request.category} Issue</Text>
-          <View style={styles.detailRow}>
-            <MaterialIcons name="location-on" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.detailText}>{request.property?.name || request.property?.address || 'Property'}</Text>
+          <View style={styles.cardHeader}>
+            <View>
+              <Text style={styles.ticketId}>Ticket #{request._id.slice(-6).toUpperCase()}</Text>
+              <Text style={styles.categoryTitle}>{request.category} Issue</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+              <MaterialIcons name={statusStyle.icon} size={14} color={statusStyle.text} />
+              <Text style={[styles.statusBadgeText, { color: statusStyle.text }]}>{statusStyle.label}</Text>
+            </View>
           </View>
-          <View style={styles.detailRow}>
-            <MaterialIcons name="person" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.detailText}>{request.tenant?.firstName} {request.tenant?.lastName} ({request.tenant?.email})</Text>
-          </View>
-          <View style={styles.detailRow}>
-            <MaterialIcons name="calendar-today" size={16} color={Colors.onSurfaceVariant} />
-            <Text style={styles.detailText}>Submitted: {formatDate(request.createdAt)}</Text>
+
+          <View style={styles.divider} />
+
+          <View style={styles.detailGrid}>
+            <View style={styles.detailItem}>
+              <View style={styles.iconBox}>
+                <MaterialIcons name="location-on" size={18} color={Colors.secondary} />
+              </View>
+              <View style={styles.detailTextWrap}>
+                <Text style={styles.detailLabel}>Property</Text>
+                <Text style={styles.detailText}>{request.property?.title || request.property?.location || 'Property'}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailItem}>
+              <View style={styles.iconBox}>
+                <MaterialIcons name="person" size={18} color={Colors.secondary} />
+              </View>
+              <View style={styles.detailTextWrap}>
+                <Text style={styles.detailLabel}>Tenant</Text>
+                <Text style={styles.detailText}>{request.tenant?.name || 'Unknown'}</Text>
+                {request.tenant?.phone && <Text style={styles.detailSubText}>{request.tenant.phone}</Text>}
+                <Text style={styles.detailSubText}>{request.tenant?.email}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailItem}>
+              <View style={styles.iconBox}>
+                <MaterialIcons name="calendar-today" size={18} color={Colors.secondary} />
+              </View>
+              <View style={styles.detailTextWrap}>
+                <Text style={styles.detailLabel}>Submitted</Text>
+                <Text style={styles.detailText}>{formatDate(request.createdAt)}</Text>
+              </View>
+            </View>
           </View>
 
           <View style={styles.divider} />
@@ -222,9 +267,19 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, shadowColor: '#191C1E', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 3 },
   
-  categoryTitle: { fontSize: 20, fontWeight: '800', color: Colors.primary, marginBottom: 12 },
-  detailRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  detailText: { fontSize: 14, color: Colors.onSurfaceVariant },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  ticketId: { fontSize: 12, fontWeight: '700', color: Colors.onSurfaceVariant, marginBottom: 4, letterSpacing: 0.5 },
+  categoryTitle: { fontSize: 20, fontWeight: '800', color: Colors.primary },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 },
+  statusBadgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+
+  detailGrid: { gap: 16 },
+  detailItem: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  iconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(0,101,145,0.06)', alignItems: 'center', justifyContent: 'center' },
+  detailTextWrap: { flex: 1, paddingTop: 2 },
+  detailLabel: { fontSize: 11, fontWeight: '700', color: Colors.onSurfaceVariant, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  detailText: { fontSize: 15, fontWeight: '600', color: Colors.primary },
+  detailSubText: { fontSize: 13, color: Colors.onSurfaceVariant, marginTop: 2 },
 
   divider: { height: 1, backgroundColor: Colors.surfaceContainerHigh, marginVertical: 16 },
   
