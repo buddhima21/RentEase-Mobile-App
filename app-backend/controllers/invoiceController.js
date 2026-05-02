@@ -43,6 +43,8 @@ const mapToDTO = (inv) => ({
   total:          inv.total,
   overdueFee:     inv.overdueFee,
   status:         inv.status,
+  externalPaymentSlip: inv.externalPaymentSlip,
+  externalPaymentStatus: inv.externalPaymentStatus,
   deletedByTenant: inv.deletedByTenant,
   deletedByOwner:  inv.deletedByOwner,
   createdAt:      inv.createdAt,
@@ -164,6 +166,70 @@ const updateStatus = async (req, res) => {
   }
 };
 
+// POST /api/invoices/:id/external-payment
+const submitExternalPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { slipImage } = req.body;
+
+    let invoice = await Invoice.findById(id).catch(() => null);
+    if (!invoice) invoice = await Invoice.findOne({ invoiceNumber: id });
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    invoice.externalPaymentSlip = slipImage;
+    invoice.externalPaymentStatus = 'PENDING';
+    await invoice.save();
+
+    res.json({ message: 'External payment submitted', invoice: mapToDTO(invoice) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// PUT /api/invoices/:id/external-status
+const updateExternalStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // ACCEPTED or REJECTED
+
+    let invoice = await Invoice.findById(id).catch(() => null);
+    if (!invoice) invoice = await Invoice.findOne({ invoiceNumber: id });
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    invoice.externalPaymentStatus = status;
+
+    if (status === 'ACCEPTED') {
+      const wasPaid = invoice.status === 'PAID';
+      invoice.status = 'PAID';
+
+      if (!wasPaid && invoice.ownerId) {
+        let wallet = await Wallet.findOne({ ownerId: invoice.ownerId });
+        if (!wallet) wallet = new Wallet({ ownerId: invoice.ownerId, balance: 0 });
+        wallet.balance = (wallet.balance || 0) + (invoice.total || 0);
+        await wallet.save();
+
+        await WalletTransaction.create({
+          walletId:    wallet._id.toString(),
+          amount:      invoice.total,
+          type:        'DEPOSIT',
+          description: `External rent payment for unit ${invoice.unit || 'Unknown'}`,
+          timestamp:   new Date(),
+        });
+      }
+    } else if (status === 'REJECTED') {
+      // Revert invoice status to SENT or PENDING if it was somehow paid incorrectly
+      if (invoice.status === 'PAID') {
+         invoice.status = 'SENT';
+      }
+    }
+
+    await invoice.save();
+    res.json({ message: `External payment ${status.toLowerCase()}`, invoice: mapToDTO(invoice) });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // DELETE /api/invoices/:id/tenant
 const deleteByTenant = async (req, res) => {
   try {
@@ -237,6 +303,8 @@ module.exports = {
   sendInvoice,
   saveInvoice,
   updateStatus,
+  submitExternalPayment,
+  updateExternalStatus,
   deleteByTenant,
   deleteByOwner,
   generateInvoicePdf,
