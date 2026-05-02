@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 
-const ReviewSchema = new mongoose.Schema(
+const reviewSchema = new mongoose.Schema(
   {
     property: {
       type: mongoose.Schema.Types.ObjectId,
@@ -14,29 +14,35 @@ const ReviewSchema = new mongoose.Schema(
     },
     rating: {
       type: Number,
-      required: true,
+      required: [true, "Please add a rating"],
       min: 1,
       max: 5,
     },
     comment: {
       type: String,
-      required: true,
-    },
-    images: {
-      type: [String],
-      default: [],
+      required: [true, "Please add a comment"],
+      trim: true,
     },
     status: {
       type: String,
       enum: ["pending", "accepted", "rejected"],
       default: "pending",
     },
+    images: {
+      type: [String],
+      default: [],
+    },
     ownerReply: {
       type: String,
       default: null,
+      trim: true
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
-module.exports = mongoose.model("Review", ReviewSchema);
+// Multiple reviews per user per property are now allowed.
+
+module.exports = mongoose.model("Review", reviewSchema);

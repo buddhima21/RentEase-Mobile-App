@@ -11,7 +11,7 @@ const {
   addOwnerReply,
   deleteReviewByOwner,
 } = require("../controllers/reviewController");
-const { protect, authorizeRoles } = require("../middleware/authMiddleware");
+const { protect, authorizeRoles, protectOptional } = require("../middleware/authMiddleware");
 
 // Admin - get all reviews
 router.get("/admin/all", protect, authorizeRoles("admin"), getAllReviews);
@@ -24,7 +24,7 @@ router.delete("/owner/:id", protect, authorizeRoles("owner"), deleteReviewByOwne
 
 // Get reviews for a property / Add review
 router.route("/:propertyId")
-  .get(getReviews)
+  .get(protectOptional, getReviews)
   .post(protect, addReview);
 
 // Update / Delete a specific review
