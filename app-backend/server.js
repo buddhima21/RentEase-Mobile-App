@@ -37,6 +37,7 @@ app.use("/api/payments",       require("./routes/paymentRoutes"));
 app.use("/api/notifications",  require("./routes/notificationRoutes"));
 app.use("/api/maintenance",    require("./routes/maintenanceRoutes"));
 app.use("/api/favorites",      require("./routes/favoriteRoutes"));
+app.use("/api/owner-tenants",  require("./routes/ownerTenantsRoutes"));
 
 // Test route
 app.get("/", (req, res) => {

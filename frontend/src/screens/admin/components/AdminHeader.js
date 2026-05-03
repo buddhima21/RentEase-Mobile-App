@@ -33,7 +33,7 @@ export default function AdminHeader() {
           <TouchableOpacity onPress={() => alert('Users management coming soon!')}>
             <Text style={styles.navLink}>Users</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate('AdminDashboard')}>
+          <TouchableOpacity onPress={() => navigation.navigate('AdminMaintenanceHub')}>
             <Text style={styles.navLink}>Approvals</Text>
           </TouchableOpacity>
         </View>

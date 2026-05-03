@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import AdminHeader from './components/AdminHeader';
 import AdminStatsGrid from './components/AdminStatsGrid';
@@ -63,7 +64,8 @@ export default function AdminDashboardScreen({ navigation }) {
       ));
       Alert.alert("Success", "Property approved successfully.");
     } catch (err) {
-      Alert.alert('Error', 'Failed to approve property.');
+      const message = err?.response?.data?.message || 'Failed to approve property.';
+      Alert.alert('Error', message);
     }
   };
 
@@ -87,7 +89,8 @@ export default function AdminDashboardScreen({ navigation }) {
       ));
       Alert.alert("Success", "Property rejected successfully.");
     } catch (err) {
-      Alert.alert('Error', 'Failed to reject property.');
+      const message = err?.response?.data?.message || 'Failed to reject property.';
+      Alert.alert('Error', message);
     }
   };
 
@@ -138,6 +141,18 @@ export default function AdminDashboardScreen({ navigation }) {
               </LinearGradient>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AdminMaintenanceHub')}
+            style={styles.maintenanceActionBtn}
+            activeOpacity={0.85}
+          >
+            <LinearGradient colors={['#6d28d9', '#4c1d95']} style={styles.maintenanceActionGradient}>
+              <MaterialIcons name="home-repair-service" size={20} color="#fff" />
+              <Text style={styles.maintenanceActionText}>Open Maintenance Requests</Text>
+              <MaterialIcons name="chevron-right" size={20} color="#fff" />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
 
         <AdminStatsGrid 
@@ -216,6 +231,9 @@ const styles = StyleSheet.create({
   quickActionBtn: { flex: 1, height: 48, borderRadius: 14, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
   quickActionGradient: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   quickActionText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  maintenanceActionBtn: { marginTop: 12, borderRadius: 14, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  maintenanceActionGradient: { height: 52, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  maintenanceActionText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   bottomNavContainer: { position: 'absolute', bottom: 0, width: '100%' },
 
   // Modal Styles

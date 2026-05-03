@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -58,10 +59,10 @@ function AdminRequestCard({ request, onPress }) {
       </View>
 
       <Text style={styles.propertyTitle} numberOfLines={1}>
-        {property.name || property.address || 'Property'}
+        {property.title || property.location || 'Property'}
       </Text>
       <Text style={styles.tenantText} numberOfLines={1}>
-        Tenant: {tenant.firstName} {tenant.lastName}
+        Tenant: {tenant.name || 'Unknown'}
       </Text>
 
       <View style={styles.divider} />
@@ -86,6 +87,7 @@ export default function AdminMaintenanceHubScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const load = useCallback(async (pull = false) => {
     if (pull) setRefreshing(true);
@@ -117,6 +119,16 @@ export default function AdminMaintenanceHubScreen({ navigation }) {
   if (activeTab === 'PENDING') displayedRequests = pendingRequests;
   if (activeTab === 'RESOLVED') displayedRequests = resolvedRequests;
 
+  if (searchQuery.trim() !== '') {
+    const q = searchQuery.toLowerCase();
+    displayedRequests = displayedRequests.filter(r => {
+      const propTitle = (r.property?.title || '').toLowerCase();
+      const tenantName = (r.tenant?.name || '').toLowerCase();
+      const cat = (r.category || '').toLowerCase();
+      return propTitle.includes(q) || tenantName.includes(q) || cat.includes(q);
+    });
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -128,6 +140,22 @@ export default function AdminMaintenanceHubScreen({ navigation }) {
           <Text style={styles.headerTitle}>Admin Maintenance</Text>
         </View>
         <View style={{ width: 40 }} />
+      </View>
+
+      <View style={styles.searchContainer}>
+        <MaterialIcons name="search" size={20} color={Colors.onSurfaceVariant} style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search requests..."
+          placeholderTextColor={Colors.outline}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+            <MaterialIcons name="close" size={16} color={Colors.onSurfaceVariant} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.tabContainer}>
@@ -210,6 +238,11 @@ const styles = StyleSheet.create({
   headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 17, fontWeight: '800', color: Colors.primary },
   
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surfaceContainerLow, marginHorizontal: 16, marginTop: 12, marginBottom: 4, borderRadius: 12, paddingHorizontal: 12, borderWidth: 1, borderColor: 'rgba(197,198,205,0.25)' },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, paddingVertical: 12, fontSize: 14, color: Colors.onSurface },
+  clearBtn: { padding: 4 },
+
   tabContainer: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: 'rgba(197,198,205,0.25)' },
   tab: { flex: 1, paddingVertical: 14, alignItems: 'center' },
   activeTab: { borderBottomWidth: 2, borderBottomColor: Colors.secondary },

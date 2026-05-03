@@ -208,6 +208,24 @@ export default function OwnerDashboardScreen({ navigation }) {
         </View>
 
         {/* ── MY LISTINGS SECTION ── */}
+        {/* ── FINANCE HUB QUICK LINK ── */}
+        <TouchableOpacity
+          style={styles.financeLink}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('OwnerFinance')}
+        >
+          <View style={styles.financeLinkLeft}>
+            <View style={styles.financeLinkIcon}>
+              <MaterialIcons name="account-balance-wallet" size={22} color="#10b981" />
+            </View>
+            <View>
+              <Text style={styles.financeLinkTitle}>Finance Hub</Text>
+              <Text style={styles.financeLinkSub}>Wallet, Bills & Transactions</Text>
+            </View>
+          </View>
+          <MaterialIcons name="chevron-right" size={22} color="#10b981" />
+        </TouchableOpacity>
+
         {/* ── AGREEMENTS QUICK LINK ── */}
         <TouchableOpacity
           style={styles.agreementsLink}
@@ -370,6 +388,43 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   agreementsLinkSub: {
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+  },
+
+  // Finance Hub quick link
+  financeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#191C1E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+  },
+  financeLinkLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  financeLinkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  financeLinkTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.primary,
+    marginBottom: 2,
+  },
+  financeLinkSub: {
     fontSize: 12,
     color: Colors.onSurfaceVariant,
   },
