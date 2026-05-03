@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, SafeAreaView, Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import AdminHeader from './components/AdminHeader';
 import AdminStatsGrid from './components/AdminStatsGrid';
