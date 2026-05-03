@@ -3,12 +3,44 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
+const DEFAULT_PROD_API_BASE_URL = 'https://rentease-mobile-app-production.up.railway.app/api';
+
+function normalizeApiBaseUrl(url) {
+  const trimmedUrl = url?.trim();
+
+  if (!trimmedUrl) {
+    return null;
+  }
+
+  if (trimmedUrl.endsWith('/api')) {
+    return trimmedUrl;
+  }
+
+  return `${trimmedUrl.replace(/\/$/, '')}/api`;
+}
+
 /**
  * Determine the API base URL based on the platform:
  * - Web: localhost
  * - Expo Go (physical device): extract host IP from Expo's dev server URI
  */
 function getBaseUrl() {
+  const configuredBaseUrl = normalizeApiBaseUrl(
+    process.env.EXPO_PUBLIC_API_URL || Constants.expoConfig?.extra?.apiBaseUrl
+  );
+
+  if (configuredBaseUrl) {
+    return configuredBaseUrl;
+  }
+
+  if (Constants.appOwnership === 'expo') {
+    return DEFAULT_PROD_API_BASE_URL;
+  }
+
+  if (!__DEV__) {
+    return DEFAULT_PROD_API_BASE_URL;
+  }
+
   if (Platform.OS === 'web') {
     return 'http://localhost:5000/api';
   }
