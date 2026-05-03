@@ -9,6 +9,10 @@ import Constants from 'expo-constants';
  * - Expo Go (physical device): extract host IP from Expo's dev server URI
  */
 function getBaseUrl() {
+  // Use your live Render backend URL globally
+  return 'https://rentease-mobile-app-backend.onrender.com/api';
+
+  /* --- Local Development Configuration ---
   if (Platform.OS === 'web') {
     return 'http://localhost:5000/api';
   }
@@ -32,6 +36,7 @@ function getBaseUrl() {
 
   // Fallback
   return 'http://172.28.8.99:5000/api';
+  */
 }
 
 const API = axios.create({
