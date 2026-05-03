@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, ScrollView, Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Text, StyleSheet, ScrollView,  Platform, RefreshControl, ActivityIndicator, Alert, Modal, TextInput, TouchableOpacity } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import AdminHeader from './components/AdminHeader';
 import AdminStatsGrid from './components/AdminStatsGrid';
 import AdminModerationList from './components/AdminModerationList';
 import BottomNav from '../../components/navigation/BottomNav';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialIcons } from '@expo/vector-icons';
 import { getAllPropertiesForAdmin, updatePropertyStatus, formatProperty } from '../../services/propertyService';
 
 export default function AdminDashboardScreen({ navigation }) {
@@ -58,11 +60,12 @@ export default function AdminDashboardScreen({ navigation }) {
     try {
       await updatePropertyStatus(propertyId, 'approved');
       setProperties(prev => prev.map(p => 
-        p.id === propertyId ? { ...p, status: 'approved', rejectionReason: null } : p
+        p.id === propertyId ? { ...p, status: 'approved' } : p
       ));
       Alert.alert("Success", "Property approved successfully.");
     } catch (err) {
-      Alert.alert('Error', 'Failed to approve property.');
+      const message = err?.response?.data?.message || 'Failed to approve property.';
+      Alert.alert('Error', message);
     }
   };
 
@@ -78,17 +81,16 @@ export default function AdminDashboardScreen({ navigation }) {
       return;
     }
     
-    const reason = rejectReason.trim();
-    const targetId = rejectPropertyId;
     setRejectModalVisible(false);
     try {
-      await updatePropertyStatus(targetId, 'rejected', reason);
+      await updatePropertyStatus(rejectPropertyId, 'rejected', rejectReason);
       setProperties(prev => prev.map(p => 
-        p.id === targetId ? { ...p, status: 'rejected', rejectionReason: reason } : p
+        p.id === rejectPropertyId ? { ...p, status: 'rejected' } : p
       ));
       Alert.alert("Success", "Property rejected successfully.");
     } catch (err) {
-      Alert.alert('Error', 'Failed to reject property.');
+      const message = err?.response?.data?.message || 'Failed to reject property.';
+      Alert.alert('Error', message);
     }
   };
 
@@ -115,8 +117,41 @@ export default function AdminDashboardScreen({ navigation }) {
         <View style={styles.sectionHeader}>
           <Text style={styles.title}>Admin Dashboard</Text>
           <Text style={styles.subtitle}>Manage platform activity and approve new property listings.</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Analytics')} style={styles.analyticsBtn}>
-            <Text style={styles.analyticsBtnText}>View System Analytics</Text>
+          
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Analytics', { view: 'stats' })} 
+              style={styles.quickActionBtn}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={['#006591', '#00486b']} style={styles.quickActionGradient}>
+                <MaterialIcons name="insights" size={18} color="#fff" />
+                <Text style={styles.quickActionText}>System Analytics</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('Analytics', { view: 'reviews' })} 
+              style={styles.quickActionBtn}
+              activeOpacity={0.8}
+            >
+              <LinearGradient colors={['#00897b', '#00695c']} style={styles.quickActionGradient}>
+                <MaterialIcons name="rate-review" size={18} color="#fff" />
+                <Text style={styles.quickActionText}>Manage Reviews</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => navigation.navigate('AdminMaintenanceHub')}
+            style={styles.maintenanceActionBtn}
+            activeOpacity={0.85}
+          >
+            <LinearGradient colors={['#6d28d9', '#4c1d95']} style={styles.maintenanceActionGradient}>
+              <MaterialIcons name="home-repair-service" size={20} color="#fff" />
+              <Text style={styles.maintenanceActionText}>Open Maintenance Requests</Text>
+              <MaterialIcons name="chevron-right" size={20} color="#fff" />
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -191,9 +226,14 @@ const styles = StyleSheet.create({
     fontSize: 32, fontWeight: '800', color: '#091426', letterSpacing: -0.5, marginBottom: 8,
     ...(Platform.OS === 'web' && { fontSize: 36 }),
   },
-  subtitle: { fontSize: 18, color: '#45474c' },
-  analyticsBtn: { marginTop: 16, backgroundColor: '#091426', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12, alignSelf: 'flex-start' },
-  analyticsBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  subtitle: { fontSize: 16, color: '#475569', lineHeight: 24, marginBottom: 20 },
+  quickActionsRow: { flexDirection: 'row', gap: 12, marginTop: 10 },
+  quickActionBtn: { flex: 1, height: 48, borderRadius: 14, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  quickActionGradient: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  quickActionText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  maintenanceActionBtn: { marginTop: 12, borderRadius: 14, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 },
+  maintenanceActionGradient: { height: 52, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  maintenanceActionText: { color: '#fff', fontWeight: '800', fontSize: 14 },
   bottomNavContainer: { position: 'absolute', bottom: 0, width: '100%' },
 
   // Modal Styles

@@ -13,9 +13,17 @@ import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import ReviewScreen from '../screens/user/ReviewScreen';
 import AnalyticsScreen from '../screens/shared/AnalyticsScreen';
 import InboxScreen from '../screens/user/InboxScreen';
+import OwnerFinanceScreen from '../screens/owner/OwnerFinanceScreen';
 // ── Agreement screens (new) ──────────────────────────────────────────────────
 import AgreementsScreen from '../screens/agreements/AgreementsScreen';
 import AgreementDetailsScreen from '../screens/agreements/AgreementDetailsScreen';
+
+// ── Maintenance screens ──
+import MaintenanceHubScreen from '../screens/maintenance/MaintenanceHubScreen';
+import CreateRequestScreen from '../screens/maintenance/CreateRequestScreen';
+import RequestDetailScreen from '../screens/maintenance/RequestDetailScreen';
+import AdminMaintenanceHubScreen from '../screens/maintenance/AdminMaintenanceHubScreen';
+import AdminRequestDetailScreen from '../screens/maintenance/AdminRequestDetailScreen';
 
 // ── Rent Payment & Tracking screens ──
 import TenantBillsScreen from '../screens/user/TenantBillsScreen';
@@ -26,6 +34,7 @@ import TenantWalletScreen from '../screens/user/TenantWalletScreen';
 import TenantBookingDashboard from '../screens/user/TenantBookingDashboard';
 import OwnerBookingRequestsScreen from '../screens/owner/OwnerBookingRequestsScreen';
 import OwnerAllocationHistoryScreen from '../screens/owner/OwnerAllocationHistoryScreen';
+import SavedScreen from '../screens/user/SavedScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +48,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Signup" component={SignupScreen} options={{ presentation: 'modal' }} />
       <Stack.Screen name="OwnerDashboard" component={OwnerDashboardScreen} />
       <Stack.Screen name="ManageProperty" component={ManagePropertyScreen} />
+      <Stack.Screen name="OwnerFinance" component={OwnerFinanceScreen} />
       <Stack.Screen name="AdminLogin" component={AdminLoginScreen} />
       <Stack.Screen name="AdminDashboard" component={AdminDashboardScreen} />
 
@@ -55,10 +65,18 @@ export default function AppNavigator() {
       <Stack.Screen name="Reviews" component={ReviewScreen} />
       <Stack.Screen name="Analytics" component={AnalyticsScreen} />
       <Stack.Screen name="Inbox" component={InboxScreen} />
+      <Stack.Screen name="Saved" component={SavedScreen} />
       
       {/* Agreement & Contract Management */}
       <Stack.Screen name="Agreements" component={AgreementsScreen} />
       <Stack.Screen name="AgreementDetails" component={AgreementDetailsScreen} />
+
+      {/* Maintenance */}
+      <Stack.Screen name="MaintenanceHub" component={MaintenanceHubScreen} />
+      <Stack.Screen name="CreateRequest" component={CreateRequestScreen} />
+      <Stack.Screen name="RequestDetail" component={RequestDetailScreen} />
+      <Stack.Screen name="AdminMaintenanceHub" component={AdminMaintenanceHubScreen} />
+      <Stack.Screen name="AdminRequestDetail" component={AdminRequestDetailScreen} />
     </Stack.Navigator>
   );
 }

@@ -208,6 +208,24 @@ export default function OwnerDashboardScreen({ navigation }) {
         </View>
 
         {/* ── MY LISTINGS SECTION ── */}
+        {/* ── FINANCE HUB QUICK LINK ── */}
+        <TouchableOpacity
+          style={styles.financeLink}
+          activeOpacity={0.85}
+          onPress={() => navigation.navigate('OwnerFinance')}
+        >
+          <View style={styles.financeLinkLeft}>
+            <View style={styles.financeLinkIcon}>
+              <MaterialIcons name="account-balance-wallet" size={22} color="#10b981" />
+            </View>
+            <View>
+              <Text style={styles.financeLinkTitle}>Finance Hub</Text>
+              <Text style={styles.financeLinkSub}>Wallet, Bills & Transactions</Text>
+            </View>
+          </View>
+          <MaterialIcons name="chevron-right" size={22} color="#10b981" />
+        </TouchableOpacity>
+
         {/* ── AGREEMENTS QUICK LINK ── */}
         <TouchableOpacity
           style={styles.agreementsLink}
@@ -374,6 +392,43 @@ const styles = StyleSheet.create({
     color: Colors.onSurfaceVariant,
   },
 
+  // Finance Hub quick link
+  financeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#191C1E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 10,
+    elevation: 2,
+    borderLeftWidth: 4,
+    borderLeftColor: '#10b981',
+  },
+  financeLinkLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  financeLinkIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  financeLinkTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: Colors.primary,
+    marginBottom: 2,
+  },
+  financeLinkSub: {
+    fontSize: 12,
+    color: Colors.onSurfaceVariant,
+  },
+
   // Listings section
   listingsSection: { marginBottom: 20 },
   sectionHeader: { marginBottom: 16 },
@@ -389,7 +444,7 @@ const styles = StyleSheet.create({
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginBottom: 12 },
   locationText: { fontSize: 12, color: Colors.onSurfaceVariant },
   actionBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 16 },
-  fab: { position: 'absolute', bottom: 80, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
+  fab: { position: 'absolute', bottom: 130, right: 20, width: 56, height: 56, borderRadius: 28, overflow: 'hidden', elevation: 8 },
   fabGradient: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
   // Rejection reason banner (shown on owner's rejected properties)

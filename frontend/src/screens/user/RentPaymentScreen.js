@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet,
-   ActivityIndicator, Alert, TextInput, Platform } from 'react-native';
+   ActivityIndicator, Alert, TextInput, Platform, Image } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../context/AuthContext';
-import { getBankCards, saveBankCard, updateInvoiceStatus } from '../../services/paymentService';
+import { getBankCards, saveBankCard, updateInvoiceStatus, submitExternalPayment } from '../../services/paymentService';
+import * as ImagePicker from 'expo-image-picker';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -59,6 +60,7 @@ export default function RentPaymentScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [cardsLoading, setCardsLoading] = useState(true);
+  const [externalSlip, setExternalSlip] = useState(null);
 
   // Load saved cards
   useEffect(() => {
@@ -116,6 +118,7 @@ export default function RentPaymentScreen({ navigation, route }) {
   };
 
   // ── Submit payment ────────────────────────────────────────────────────────
+  // ── Submit payment ────────────────────────────────────────────────────────
   const handleSubmit = async () => {
     if (!name || !email) {
       Alert.alert('Missing Info', 'Please enter your name and email.');
@@ -132,17 +135,45 @@ export default function RentPaymentScreen({ navigation, route }) {
 
     setLoading(true);
     try {
-      // Simulate network delay
-      await new Promise(r => setTimeout(r, 1500));
       const identifier = bill?.id || bill?.invoiceNo;
-      await updateInvoiceStatus(identifier, 'PAID');
+      
+      if (method === 'external') {
+        if (!externalSlip) {
+          Alert.alert('Missing Slip', 'Please upload your payment slip image.');
+          setLoading(false);
+          return;
+        }
+        await submitExternalPayment(identifier, externalSlip);
+      } else {
+        // Simulate network delay for card/bank
+        await new Promise(r => setTimeout(r, 1500));
+        await updateInvoiceStatus(identifier, 'PAID');
+      }
+
       setSuccess(true);
       if (onPaid) setTimeout(onPaid, 1800);
     } catch (err) {
       console.error('Payment error:', err);
-      Alert.alert('Error', 'Payment processed but status update failed. Please contact support.');
+      Alert.alert('Error', 'Payment processing failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const pickSlipImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      return Alert.alert('Permission Required', 'Please allow access to your photo library.');
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.6,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets[0].base64) {
+      setExternalSlip(`data:image/jpeg;base64,${result.assets[0].base64}`);
     }
   };
 
@@ -203,6 +234,7 @@ export default function RentPaymentScreen({ navigation, route }) {
           {[
             { id: 'card', icon: 'credit-card', label: 'Card' },
             { id: 'bank', icon: 'account-balance', label: 'Bank Transfer' },
+            { id: 'external', icon: 'receipt', label: 'External Payment' },
           ].map(m => (
             <TouchableOpacity
               key={m.id}
@@ -309,6 +341,30 @@ export default function RentPaymentScreen({ navigation, route }) {
           </>
         )}
 
+        {/* External Payment Slip Upload */}
+        {method === 'external' && (
+          <View style={{ marginBottom: 20 }}>
+            <Text style={styles.sectionLabel}>UPLOAD PAYMENT SLIP</Text>
+            <TouchableOpacity 
+              style={styles.uploadBox} 
+              onPress={pickSlipImage}
+            >
+              {externalSlip ? (
+                <View>
+                  <Image source={{ uri: externalSlip }} style={styles.previewSlip} />
+                  <Text style={styles.changeSlipText}>Tap to change image</Text>
+                </View>
+              ) : (
+                <View style={styles.uploadPlaceholder}>
+                  <MaterialIcons name="add-a-photo" size={40} color={Colors.outline} />
+                  <Text style={styles.uploadPlaceholderText}>Upload ATM Slip or Receipt</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+            <Text style={styles.bankNote}>Owner will verify this slip manually. Your bill status will update once accepted.</Text>
+          </View>
+        )}
+
         {/* Submit */}
         <TouchableOpacity
           style={[styles.submitBtn, loading && styles.btnDisabled]}
@@ -321,7 +377,9 @@ export default function RentPaymentScreen({ navigation, route }) {
           ) : (
             <>
               <MaterialIcons name="lock" size={18} color="#fff" />
-              <Text style={styles.submitBtnText}>Securely Pay {displayAmount}</Text>
+              <Text style={styles.submitBtnText}>
+                {method === 'external' ? 'Submit Payment Slip' : `Securely Pay ${displayAmount}`}
+              </Text>
             </>
           )}
         </TouchableOpacity>
@@ -484,4 +542,20 @@ const styles = StyleSheet.create({
     borderRadius: 12, marginTop: 12,
   },
   successBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+
+  uploadBox: {
+    backgroundColor: Colors.surfaceContainerLow,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: Colors.outlineVariant,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 180,
+  },
+  uploadPlaceholder: { alignItems: 'center' },
+  uploadPlaceholderText: { color: Colors.outline, marginTop: 10, fontWeight: '600' },
+  previewSlip: { width: '100%', height: 200, borderRadius: 12, resizeMode: 'contain' },
+  changeSlipText: { textAlign: 'center', marginTop: 10, color: Colors.secondary, fontWeight: '700', fontSize: 12 },
 });

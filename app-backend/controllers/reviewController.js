@@ -6,14 +6,43 @@ const Property = require("../models/Property");
 // @access  Public
 const getReviews = async (req, res) => {
   try {
-    const reviews = await Review.find({ property: req.params.propertyId, status: "accepted" })
+    const propertyId = req.params.propertyId;
+    const property = await Property.findById(propertyId);
+    
+    if (!property) {
+      return res.status(404).json({ success: false, message: "Property not found" });
+    }
+
+    let query = { property: propertyId };
+
+    // Logic for visibility:
+    // 1. If Admin -> show all
+    // 2. If Property Owner -> show all for this property
+    // 3. If Logged in User -> show 'accepted' OR reviews where user is author
+    // 4. If Not Logged in -> show only 'accepted'
+
+    if (req.user) {
+      if (req.user.role === "admin" || property.owner.toString() === req.user._id.toString()) {
+        // Show all
+      } else {
+        query.$or = [
+          { status: "accepted" },
+          { user: req.user._id }
+        ];
+      }
+    } else {
+      query.status = "accepted";
+    }
+
+    const reviews = await Review.find(query)
       .populate("user", "name")
       .sort({ createdAt: -1 });
 
-    // Calculate average rating
+    // Calculate average rating (only from accepted reviews)
+    const acceptedReviews = reviews.filter(r => r.status === "accepted");
     const avgRating =
-      reviews.length > 0
-        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+      acceptedReviews.length > 0
+        ? acceptedReviews.reduce((sum, r) => sum + r.rating, 0) / acceptedReviews.length
         : 0;
 
     res.status(200).json({

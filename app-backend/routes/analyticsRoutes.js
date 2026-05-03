@@ -3,10 +3,8 @@ const router = express.Router();
 const { getAdminAnalytics, getOwnerAnalytics } = require("../controllers/analyticsController");
 const { protect, authorizeRoles } = require("../middleware/authMiddleware");
 
-// GET /api/analytics/admin
+// Routes
 router.get("/admin", protect, authorizeRoles("admin"), getAdminAnalytics);
-
-// GET /api/analytics/owner
 router.get("/owner", protect, authorizeRoles("owner"), getOwnerAnalytics);
 
 module.exports = router;

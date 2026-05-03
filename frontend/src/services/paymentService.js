@@ -22,6 +22,12 @@ export const deleteInvoiceByTenant = (id) =>
 export const deleteInvoiceByOwner = (id) =>
   API.delete(`/invoices/${id}/owner`);
 
+export const submitExternalPayment = (id, slipImage) =>
+  API.post(`/invoices/${id}/external-payment`, { slipImage });
+
+export const updateExternalPaymentStatus = (id, status) =>
+  API.put(`/invoices/${id}/external-status`, { status });
+
 // ── Payment APIs ──────────────────────────────────────────────────────────────
 export const getDuePayments = (tenantId) =>
   API.get(`/payments/due/${tenantId}`);
@@ -47,13 +53,17 @@ export const getWalletTransactions = (ownerId) =>
 
 // ── Bank Card APIs ─────────────────────────────────────────────────────────────
 export const getBankCards = (ownerId) =>
-  API.get(`/cards/${ownerId}`);
+  API.get(`/bank-cards/${ownerId}`);
 
 export const saveBankCard = (cardData) =>
-  API.post('/cards', cardData);
+  API.post('/bank-cards', cardData);
 
 export const updateBankCard = (id, cardData) =>
-  API.put(`/cards/${id}`, cardData);
+  API.put(`/bank-cards/${id}`, cardData);
 
 export const deleteBankCard = (id) =>
-  API.delete(`/cards/${id}`);
+  API.delete(`/bank-cards/${id}`);
+
+// ── Owner Tenants ──────────────────────────────────────────────────────────────
+export const getOwnerTenants = (ownerId) =>
+  API.get(`/owner-tenants/${ownerId}`);

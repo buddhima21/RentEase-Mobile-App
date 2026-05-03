@@ -18,6 +18,8 @@ const InvoiceSchema = new mongoose.Schema(
     total:         { type: Number, default: 0 },
     overdueFee:    { type: Number, default: 0 },
     status:        { type: String, enum: ['SENT', 'PAID', 'PENDING', 'OVERDUE'], default: 'PENDING' },
+    externalPaymentSlip: { type: String },
+    externalPaymentStatus: { type: String, enum: ['PENDING', 'ACCEPTED', 'REJECTED'] },
     deletedByTenant: { type: Boolean, default: false },
     deletedByOwner:  { type: Boolean, default: false },
   },
