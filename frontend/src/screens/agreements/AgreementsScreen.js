@@ -138,6 +138,9 @@ export default function AgreementsScreen({ navigation }) {
   const counts = {
     active: agreements.filter((a) => a.status === 'ACTIVE').length,
     pending: agreements.filter((a) => a.status === 'PENDING').length,
+    created: agreements.filter((a) => a.status === 'CREATED').length,
+    signed: agreements.filter((a) => a.status === 'SIGNED_BY_TENANT').length,
+    approved: agreements.filter((a) => a.status === 'APPROVED_BY_OWNER').length,
     termination: agreements.filter((a) => a.status === 'TERMINATION_REQUESTED').length,
   };
 

@@ -37,17 +37,36 @@ const agreementSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    booking: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Booking",
+      default: null,
+    },
+    signatureImagePath: {
+      type: String,
+      default: null,
+    },
+    ownerRejectReason: {
+      type: String,
+      default: null,
+    },
     status: {
       type: String,
       enum: [
+        // Legacy statuses (kept for backward compatibility)
         "PENDING",
         "ACTIVE",
         "CANCELLED",
         "EXPIRED",
         "TERMINATION_REQUESTED",
         "TERMINATED",
+        // New signature-based flow statuses
+        "CREATED",
+        "SIGNED_BY_TENANT",
+        "APPROVED_BY_OWNER",
+        "REJECTED_BY_OWNER",
       ],
-      default: "PENDING",
+      default: "CREATED",
     },
     terminationReason: {
       type: String,
