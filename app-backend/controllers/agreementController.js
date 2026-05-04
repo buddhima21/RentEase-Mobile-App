@@ -168,8 +168,8 @@ const requestTermination = async (req, res) => {
     if (agreement.tenant.toString() !== req.user._id.toString()) {
       return sendError(res, 403, "Only the tenant can request termination");
     }
-    if (agreement.status !== "ACTIVE") {
-      return sendError(res, 400, "Can only request termination of an ACTIVE agreement");
+    if (agreement.status !== "ACTIVE" && agreement.status !== "APPROVED_BY_OWNER") {
+      return sendError(res, 400, "Can only request termination of an ACTIVE or APPROVED agreement");
     }
 
     // Calculate penalty: 1 month's rent if more than 30 days remain
@@ -308,7 +308,7 @@ const ownerApproveAgreement = async (req, res) => {
       );
     }
 
-    agreement.status = "APPROVED_BY_OWNER";
+    agreement.status = "ACTIVE";
     await agreement.save();
 
     res.json({ message: "Agreement approved by owner", agreement });
@@ -367,8 +367,8 @@ const generateAgreementPDF = async (req, res) => {
     if (!isTenant && !isOwner) {
       return sendError(res, 403, "Not authorised to access this agreement");
     }
-    if (agreement.status !== "APPROVED_BY_OWNER") {
-      return sendError(res, 400, "PDF is only available for APPROVED_BY_OWNER agreements");
+    if (agreement.status !== "APPROVED_BY_OWNER" && agreement.status !== "ACTIVE") {
+      return sendError(res, 400, "PDF is only available for APPROVED or ACTIVE agreements");
     }
 
     const property = agreement.property || {};
