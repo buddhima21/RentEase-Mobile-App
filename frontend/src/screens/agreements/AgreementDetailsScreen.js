@@ -437,8 +437,8 @@ export default function AgreementDetailsScreen({ navigation, route }) {
           </SectionCard>
         )}
 
-        {/* ── Tenant Actions: ACTIVE ── */}
-        {isTenant && status === 'ACTIVE' && (
+        {/* ── Tenant Actions: ACTIVE or APPROVED ── */}
+        {isTenant && (status === 'ACTIVE' || status === 'APPROVED_BY_OWNER') && (
           <SectionCard title="Agreement Active" icon="check-circle">
             <Text style={styles.actionHintText}>
               Your agreement is currently active. You can request early termination below.
@@ -524,9 +524,9 @@ export default function AgreementDetailsScreen({ navigation, route }) {
           </SectionCard>
         )}
 
-        {/* ── PDF Download (APPROVED_BY_OWNER only) ── */}
+        {/* ── PDF Download (APPROVED or ACTIVE) ── */}
         <View style={styles.pdfRow}>
-          {status === 'APPROVED_BY_OWNER' ? (
+          {(status === 'APPROVED_BY_OWNER' || status === 'ACTIVE') ? (
             <TouchableOpacity
               style={styles.pdfBtn}
               onPress={handleDownloadPDF}
