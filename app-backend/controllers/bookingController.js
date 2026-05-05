@@ -1,5 +1,6 @@
 const Booking = require("../models/Booking");
 const Property = require("../models/Property");
+const Agreement = require("../models/Agreement");
 const { createNotification } = require("./notificationController");
 
 // @desc    Create a new booking request
@@ -227,7 +228,34 @@ const approveBooking = async (req, res) => {
     booking.status = "approved";
     await booking.save();
 
-    // Return fully populated booking
+    // ── Auto-create Agreement on booking approval ──────────────────────────
+    try {
+      const leaseStart = new Date(booking.preferredDate);
+      const leaseEnd = new Date(leaseStart);
+      leaseEnd.setFullYear(leaseEnd.getFullYear() + 1);
+
+      // Only create if no agreement already exists for this booking
+      const existingAgreement = await Agreement.findOne({ booking: booking._id });
+      if (!existingAgreement) {
+        await Agreement.create({
+          booking: booking._id,
+          property: booking.property._id,
+          tenant: booking.tenant,
+          owner: booking.owner,
+          leaseStartDate: leaseStart,
+          leaseEndDate: leaseEnd,
+          rentAmount: booking.property.price || 0,
+          securityDeposit: 0,
+          status: "CREATED",
+          notes: "Auto-generated on booking approval",
+        });
+      }
+    } catch (agrErr) {
+      // Non-critical: log but don't fail the booking approval
+      console.error("Auto-create agreement error:", agrErr.message);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const populatedBooking = await Booking.findById(booking._id)
       .populate("property", "title location price bedrooms bathrooms images propertyType")
       .populate("tenant", "name email phone")

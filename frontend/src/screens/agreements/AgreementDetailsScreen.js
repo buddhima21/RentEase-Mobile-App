@@ -8,14 +8,16 @@ import {
   SafeAreaView,
   ActivityIndicator,
   Alert,
-  Linking,
+  Image,
   Platform,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import Colors from '../../constants/Colors';
 import { useAuth } from '../../context/AuthContext';
+import API from '../../services/api';
 import {
   getAgreementById,
   acceptAgreement,
@@ -23,9 +25,16 @@ import {
   requestTermination,
   acceptTermination,
   rejectTermination,
+  uploadSignature,
+  ownerApproveAgreement,
+  ownerRejectAgreement,
+  downloadAgreementPDF,
   getAgreementStatusStyle,
   formatDate,
 } from '../../services/agreementService';
+
+// Base URL for serving static uploads (same host as API)
+const BASE_URL = API.defaults.baseURL?.replace('/api', '') || '';
 
 // ─── Small reusable row ───────────────────────────────────────────────────────
 function InfoRow({ icon, label, value, valueStyle }) {
@@ -216,21 +225,80 @@ export default function AgreementDetailsScreen({ navigation, route }) {
       "Reject the tenant's termination request? The agreement will remain active."
     );
 
-  // ── Open PDF ──
-  const handleViewContract = async () => {
-    if (!agreement?.pdfUrl) {
-      Alert.alert('No PDF Available', 'The contract PDF is not yet available for this agreement.');
+  // ── Upload Signature (Tenant) ──
+  const handleUploadSignature = async () => {
+    const { status: permStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permStatus !== 'granted') {
+      Alert.alert('Permission Required', 'Please allow access to your photo library.');
       return;
     }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.85,
+    });
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    setActionLoading(true);
     try {
-      const supported = await Linking.canOpenURL(agreement.pdfUrl);
-      if (supported) {
-        await Linking.openURL(agreement.pdfUrl);
-      } else {
-        Alert.alert('Cannot Open', 'Unable to open the contract URL on this device.');
-      }
+      await uploadSignature(agreement._id, {
+        uri: asset.uri,
+        name: asset.fileName || 'signature.jpg',
+        type: asset.mimeType || 'image/jpeg',
+      });
+      await load();
+      Alert.alert('Success', 'Your signature has been uploaded. The owner will review it.');
     } catch (err) {
-      Alert.alert('Error', 'Failed to open the contract PDF.');
+      Alert.alert('Upload Failed', err.response?.data?.message || 'Could not upload signature.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // ── Owner: Approve Agreement ──
+  const handleOwnerApprove = () =>
+    doAction(
+      () => ownerApproveAgreement(agreement._id),
+      'Approve Agreement',
+      'Confirm you have reviewed the tenant signature and approve this agreement.'
+    );
+
+  // ── Owner: Reject Agreement ──
+  const handleOwnerReject = () => {
+    Alert.alert(
+      'Reject Agreement',
+      'Are you sure you want to reject this agreement? The tenant will need to re-sign.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reject',
+          style: 'destructive',
+          onPress: async () => {
+            setActionLoading(true);
+            try {
+              await ownerRejectAgreement(agreement._id, 'Signature rejected by owner');
+              await load();
+            } catch (err) {
+              Alert.alert('Failed', err.response?.data?.message || 'Could not reject agreement.');
+            } finally {
+              setActionLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // ── Download PDF (APPROVED_BY_OWNER) ──
+  const handleDownloadPDF = async () => {
+    setActionLoading(true);
+    try {
+      await downloadAgreementPDF(agreement._id);
+    } catch (err) {
+      Alert.alert('PDF Error', err.response?.data?.message || 'Could not generate PDF.');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -314,6 +382,37 @@ export default function AgreementDetailsScreen({ navigation, route }) {
           </View>
         )}
 
+        {/* ── Tenant Actions: CREATED (upload signature) ── */}
+        {isTenant && status === 'CREATED' && (
+          <SectionCard title="Signature Required" icon="draw">
+            <Text style={styles.actionHintText}>
+              Your rental agreement is ready. Please upload your signed image to proceed.
+            </Text>
+            <ActionButton
+              label="Upload Signature"
+              icon="upload"
+              onPress={handleUploadSignature}
+              disabled={actionLoading}
+            />
+          </SectionCard>
+        )}
+
+        {/* ── Tenant: SIGNED_BY_TENANT — waiting for owner ── */}
+        {isTenant && status === 'SIGNED_BY_TENANT' && (
+          <SectionCard title="Awaiting Owner Review" icon="hourglass-top">
+            <Text style={styles.actionHintText}>
+              Your signature has been submitted. The owner will review and approve it shortly.
+            </Text>
+            {agreement.signatureImagePath && (
+              <Image
+                source={{ uri: `${BASE_URL}/${agreement.signatureImagePath}` }}
+                style={styles.signaturePreview}
+                resizeMode="contain"
+              />
+            )}
+          </SectionCard>
+        )}
+
         {/* ── Tenant Actions: PENDING ── */}
         {isTenant && status === 'PENDING' && (
           <SectionCard title="Action Required" icon="notification-important">
@@ -338,8 +437,8 @@ export default function AgreementDetailsScreen({ navigation, route }) {
           </SectionCard>
         )}
 
-        {/* ── Tenant Actions: ACTIVE ── */}
-        {isTenant && status === 'ACTIVE' && (
+        {/* ── Tenant Actions: ACTIVE or APPROVED ── */}
+        {isTenant && (status === 'ACTIVE' || status === 'APPROVED_BY_OWNER') && (
           <SectionCard title="Agreement Active" icon="check-circle">
             <Text style={styles.actionHintText}>
               Your agreement is currently active. You can request early termination below.
@@ -351,6 +450,41 @@ export default function AgreementDetailsScreen({ navigation, route }) {
               variant="danger"
               disabled={actionLoading}
             />
+          </SectionCard>
+        )}
+
+        {/* ── Owner: review SIGNED_BY_TENANT agreement ── */}
+        {isOwner && status === 'SIGNED_BY_TENANT' && (
+          <SectionCard title="Review Tenant Signature" icon="draw">
+            <Text style={styles.actionHintText}>
+              The tenant has signed the agreement. Review the signature below and approve or reject.
+            </Text>
+            {agreement.signatureImagePath ? (
+              <Image
+                source={{ uri: `${BASE_URL}/${agreement.signatureImagePath}` }}
+                style={styles.signaturePreview}
+                resizeMode="contain"
+              />
+            ) : (
+              <Text style={[styles.actionHintText, { color: Colors.error }]}>
+                No signature image found.
+              </Text>
+            )}
+            <View style={styles.actionRow}>
+              <ActionButton
+                label="Approve"
+                icon="check-circle"
+                onPress={handleOwnerApprove}
+                disabled={actionLoading}
+              />
+              <ActionButton
+                label="Reject"
+                icon="cancel"
+                onPress={handleOwnerReject}
+                variant="danger"
+                disabled={actionLoading}
+              />
+            </View>
           </SectionCard>
         )}
 
@@ -390,23 +524,28 @@ export default function AgreementDetailsScreen({ navigation, route }) {
           </SectionCard>
         )}
 
-        {/* ── View Contract Button ── */}
+        {/* ── PDF Download (APPROVED or ACTIVE) ── */}
         <View style={styles.pdfRow}>
-          <TouchableOpacity
-            style={[
-              styles.pdfBtn,
-              !agreement.pdfUrl && { opacity: 0.5 },
-            ]}
-            onPress={handleViewContract}
-            activeOpacity={0.8}
-            accessibilityLabel="View Contract PDF"
-          >
-            <MaterialIcons name="picture-as-pdf" size={18} color={Colors.secondary} />
-            <Text style={styles.pdfBtnText}>
-              {agreement.pdfUrl ? 'View Contract PDF' : 'PDF Not Available Yet'}
-            </Text>
-            <MaterialIcons name="open-in-new" size={16} color={Colors.secondary} />
-          </TouchableOpacity>
+          {(status === 'APPROVED_BY_OWNER' || status === 'ACTIVE') ? (
+            <TouchableOpacity
+              style={styles.pdfBtn}
+              onPress={handleDownloadPDF}
+              activeOpacity={0.8}
+              disabled={actionLoading}
+              accessibilityLabel="Download Agreement PDF"
+            >
+              <MaterialIcons name="picture-as-pdf" size={18} color={Colors.secondary} />
+              <Text style={styles.pdfBtnText}>Download Agreement PDF</Text>
+              <MaterialIcons name="download" size={16} color={Colors.secondary} />
+            </TouchableOpacity>
+          ) : (
+            <View style={[styles.pdfBtn, { opacity: 0.45 }]}>
+              <MaterialIcons name="picture-as-pdf" size={18} color={Colors.onSurfaceVariant} />
+              <Text style={[styles.pdfBtnText, { color: Colors.onSurfaceVariant }]}>
+                PDF available after owner approval
+              </Text>
+            </View>
+          )}
         </View>
 
         {/* ── Property Info ── */}
@@ -720,4 +859,16 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontWeight: '500',
   },
+
+  // Signature preview image
+  signaturePreview: {
+    width: '100%',
+    height: 140,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    marginBottom: 14,
+    backgroundColor: '#f8fafc',
+  },
 });
+
